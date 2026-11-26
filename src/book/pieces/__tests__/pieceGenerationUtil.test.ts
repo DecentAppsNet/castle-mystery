@@ -76,7 +76,7 @@ describe('pieceGenerationUtil', () => {
       expect(pieces.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['B', 3], ['A', 3], ['C', 3], ['Unused', 3]
       ]);
-      expect(pieces.map(piece => piece.placement?.blank ?? null)).toEqual([second, null, first, null]);
+      expect(pieces.map(piece => piece.kind === 'answer' && (piece.placement?.blank ?? null))).toEqual([second, null, first, null]);
       expect(state.pages).toEqual(original);
       expect([first.answerSet, second.answerSet, third.answerSet].every(set => set === answers)).toBe(true);
       expect(first).not.toBe(second);
@@ -121,7 +121,7 @@ describe('pieceGenerationUtil', () => {
       ]);
       updatePieceStackForConclusionPages(state, 0);
       const pieces = state.pieceStack;
-      expect(pieces.map(({ conclusionPageI, text, styleNo }) => [conclusionPageI, text, styleNo])).toEqual([
+      expect(pieces.map(({ pageI, text, styleNo }) => [pageI, text, styleNo])).toEqual([
         [0, 'B', 3], [0, 'A', 3], [2, 'B', 3], [2, 'A', 3],
         [4, 'C', 3], [4, 'D', 3]
       ]);
@@ -130,7 +130,7 @@ describe('pieceGenerationUtil', () => {
       expect(pieces[0].yPercent).toBe(pieces[2].yPercent);
       pieces[0].text = 'changed';
       pieces[0].xPercent = 99;
-      expect(pieces[2]).toMatchObject({ conclusionPageI:2, text:'B', xPercent:75 });
+      expect(pieces[2]).toMatchObject({ pageI:2, text:'B', xPercent:75 });
     });
 
     it('assigns custom styles beyond eight without wrapping and restarts for each conclusion', () => {
@@ -260,7 +260,7 @@ describe('pieceGenerationUtil', () => {
 
       // Preserve an already-positioned piece and an existing layout.
       const state = _createBookState([page]);
-      const existingPiece = { conclusionPageI:0, text:'old', styleNo:12, xPercent:91, yPercent:82, placement:null };
+      const existingPiece = { kind:'answer' as const, pageI:0, text:'old', styleNo:12, xPercent:91, yPercent:82, placement:null };
       state.pieceStack = [existingPiece];
       state.layout = {
         canvasWidth:1000, canvasHeight:600, rect:{ x:0, y:0, width:800, height:500 },

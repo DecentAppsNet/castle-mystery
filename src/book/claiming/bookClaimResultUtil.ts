@@ -40,7 +40,7 @@ function _completeClaim(bookState:BookState, claim:BookClaimState):void {
       && unlockConclusionIds.has(page.conclusion.id)) page.conclusion.isLocked = false;
   }
   bookState.pieceStack = bookState.pieceStack.filter(piece =>
-    piece.placement !== null || piece.conclusionPageI !== claim.conclusionPageI);
+    piece.kind === 'note' || piece.placement !== null || piece.pageI !== claim.conclusionPageI);
   if (bookState.layout) bookState.layout.pieceLayouts = bookState.layout.pieceLayouts.filter(({ piece }) =>
     bookState.pieceStack.includes(piece));
   claim.resultApplied = true;

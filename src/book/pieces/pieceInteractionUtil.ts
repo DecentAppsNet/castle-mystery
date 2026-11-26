@@ -3,7 +3,7 @@
 
 import { calcClampedDragCenter, calcDragGrabOffset, findTopmostControlAtPoint } from "@/canvasControls";
 import { assert, assertNonNullable } from "decent-portal";
-import { calcPageViewOffsetX, isLeftPageNo } from "../drawing/bookLayoutUtil";
+import { calcPageRect, calcPageViewOffsetX, isLeftPageNo } from "../drawing/bookLayoutUtil";
 import BookState from "../types/BookState";
 import Piece from "../types/Piece";
 import { findPieceSlotAnswerIndex, isCurrentPieceSlot, updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
@@ -14,10 +14,11 @@ import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
   return bookState.pieceStack.filter(piece => {
-    const page = bookState.pages[piece.conclusionPageI];
-    return piece.placement === null
-      && (piece.conclusionPageI === leftPageNo - 1 || piece.conclusionPageI === leftPageNo)
-      && page?.kind === 'conclusion' && !page.conclusion.isLocked;
+    const { pageI } = piece;
+    const isInSpread = pageI === leftPageNo - 1 || pageI === leftPageNo;
+    if (piece.kind === 'note') return bookState.layout?.isSinglePageView ? pageI === bookState.pageNo - 1 : isInSpread;
+    const page = bookState.pages[pageI];
+    return isInSpread && piece.placement === null && page?.kind === 'conclusion' && !page.conclusion.isLocked;
   });
 }
 
@@ -48,8 +49,10 @@ export function detachBookPiece(bookState:BookState, slot:PieceSlotLayout, offse
   // Resolve the exact placed piece before clearing either side of the association.
   const { layout } = bookState;
   assertNonNullable(layout);
-  const piece = bookState.pieceStack.find(candidate => candidate.placement?.page === slot.page && candidate.placement.blank === slot.blank);
+  const piece = bookState.pieceStack.find(candidate => candidate.kind === 'answer'
+    && candidate.placement?.page === slot.page && candidate.placement.blank === slot.blank);
   assertNonNullable(piece);
+  assert(piece.kind === 'answer');
   assert(findPieceSlotAnswerIndex(slot, piece) === slot.blank.playerAnswerIndex);
 
   // Retain full-slot geometry for immediate interaction, optionally displaced for ejection.
@@ -108,11 +111,18 @@ export function moveBookPieceDrag(bookState:BookState, canvasX:number, canvasY:n
   const record = layout.pieceLayouts.find(candidate => candidate.piece === pieceDragState.piece && candidate.isVisible);
   if (!record) return endBookPieceDrag(bookState);
 
-  const bounds = { ...layout.rect, x:layout.rect.x + calcPageViewOffsetX(bookState) };
-  assert(bounds.width > 0 && bounds.height > 0);
-  const [centerX, centerY] = calcClampedDragCenter(pieceDragState.grabOffset, bounds, canvasX, canvasY);
-  pieceDragState.piece.xPercent = (centerX - bounds.x) / bounds.width * 100;
-  pieceDragState.piece.yPercent = (centerY - bounds.y) / bounds.height * 100;
+  const spread = { ...layout.rect, x:layout.rect.x + calcPageViewOffsetX(bookState) };
+  const { piece } = pieceDragState;
+  assert(spread.width > 0 && spread.height > 0);
+  const [centerX, centerY] = calcClampedDragCenter(pieceDragState.grabOffset, spread, canvasX, canvasY);
+  if (piece.kind === 'note' && !layout.isSinglePageView) {
+    const leftPageI = isLeftPageNo(bookState.pageNo) ? bookState.pageNo - 1 : bookState.pageNo - 2;
+    const targetPageI = centerX < spread.x + spread.width / 2 ? leftPageI : leftPageI + 1;
+    if (bookState.pages[targetPageI]) piece.pageI = targetPageI;
+  }
+  const bounds = piece.kind === 'note' ? calcPageRect(spread, piece.pageI + 1) : spread;
+  piece.xPercent = (centerX - bounds.x) / bounds.width * 100;
+  piece.yPercent = (centerY - bounds.y) / bounds.height * 100;
   record.rect = { ...record.rect, x:centerX - record.rect.width / 2, y:centerY - record.rect.height / 2 };
   updateBookPieceSlotTarget(bookState);
 }
@@ -121,7 +131,7 @@ export function releaseBookPieceDrag(bookState:BookState, canvasX:number, canvas
   // Movement validates the drag and resolves the shared target at the final release position.
   moveBookPieceDrag(bookState, canvasX, canvasY);
   const { pieceDragState, hungryPieceSlot } = bookState;
-  if (pieceDragState !== null && hungryPieceSlot !== null) {
+  if (pieceDragState?.piece.kind === 'answer' && hungryPieceSlot !== null) {
     const answerIndex = findPieceSlotAnswerIndex(hungryPieceSlot, pieceDragState.piece);
     assert(answerIndex !== -1); // The shared selector guarantees listed membership.
     hungryPieceSlot.blank.playerAnswerIndex = answerIndex;

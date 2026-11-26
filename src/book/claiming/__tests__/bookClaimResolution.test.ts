@@ -179,14 +179,14 @@ describe('book claim resolution', () => {
     const { bookState, page, blank, otherBlank, layout } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);
     const stack = bookState.pieceStack;
-    const placements = stack.map(piece => piece.placement);
+    const placements = stack.map(piece => piece.kind === 'answer' && piece.placement);
     claimBookConclusion(bookState, 1, 123);
     updateBookClaim(bookState, 5623);
     expect(page.conclusion.isComplete).toBe(true);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
     expect(bookState.pieceStack).toEqual(stack.slice(0, 2));
-    stack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
+    stack.forEach((piece, i) => expect(piece.kind === 'answer' && piece.placement).toBe(placements[i]));
     expect(getVisibleBookPieces(bookState)).toEqual([]);
     expect(layout.controlLayout.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
@@ -224,7 +224,7 @@ describe('book claim resolution', () => {
     expect(page.conclusion.isComplete).toBe(false);
     expect(page.conclusion.incorrectGuessCount).toBe(1);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
-    expect(stack.every(piece => piece.placement === null)).toBe(true);
+    expect(stack.every(piece => piece.kind === 'answer' && piece.placement === null)).toBe(true);
     expect(bookState.pieceStack).toBe(stack);
     expect(getVisibleBookPieces(bookState)).toEqual(stack);
     expect([stack[2].xPercent, stack[2].yPercent]).toEqual(unusedPosition);
@@ -418,7 +418,10 @@ describe('applyBookClaimResults()', () => {
 
   it('completes success only at its interval end, preserving captured answers and placements', () => {
     const { bookState, claim, page, blank, otherBlank, layout } = _createClaimFixture(true);
-    const placements = bookState.pieceStack.map(piece => piece.placement);
+    const placedAnswers = bookState.pieceStack.slice(0, 2);
+    const placements = placedAnswers.map(piece => piece.kind === 'answer' && piece.placement);
+    const note = { kind:'note' as const, pageI:claim.conclusionPageI, text:'Remember this', styleNo:-1, xPercent:50, yPercent:50 };
+    bookState.pieceStack.push(note);
     applyBookClaimResults(bookState, claim, 3000);
     applyBookClaimResults(bookState, claim, 3499);
     expect(page.conclusion.isComplete).toBe(false);
@@ -430,7 +433,8 @@ describe('applyBookClaimResults()', () => {
     applyBookClaimResults(bookState, claim, 1000000);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
-    expect(bookState.pieceStack.map(piece => piece.placement)).toEqual(placements.slice(0, 2));
+    expect(bookState.pieceStack).toEqual([...placedAnswers, note]);
+    expect(placedAnswers.map(piece => piece.kind === 'answer' && piece.placement)).toEqual(placements);
     expect(claim.ejectedCount).toBe(0);
     expect(claim.resultApplied).toBe(true);
   });

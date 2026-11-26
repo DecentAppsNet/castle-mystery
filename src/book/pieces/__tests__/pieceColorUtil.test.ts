@@ -16,7 +16,7 @@ function _createFixture() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece:Piece = { conclusionPageI:0, text:'Second', styleNo:3, xPercent:50, yPercent:50, placement:null };
+  const piece:Piece = { kind:'answer', pageI:0, text:'Second', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.pages = [page];
   return { bookState, page, piece, blank, otherBlank };
@@ -58,7 +58,7 @@ describe('pieceColorUtil', () => {
       bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { ...page, conclusion:{ ...page.conclusion,
         parts:[{ ...blank, playerAnswerIndex:-1 }] } });
       expect(getBookPieceBackgroundColor(bookState, piece)).toBe('#808080');
-      expect(getBookPieceBackgroundColor(bookState, { ...piece, conclusionPageI:2 }))
+      expect(getBookPieceBackgroundColor(bookState, { ...piece, pageI:2 }))
         .toBe(getPieceFlairProfile(3).pieceColor);
     });
 

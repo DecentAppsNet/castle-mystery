@@ -21,15 +21,15 @@ function _fixture(correct:boolean = true) {
   };
   const claim:BookClaimState = { page, conclusionPageI:0, blanks:[blank], correct, startedAt:100,
     resultApplied:false, ejectedCount:0 };
-  const layouts:PieceLayout[] = Array.from({ length:3 }, (_, index) => ({
-    piece:{ conclusionPageI:0, placement:null, styleNo:3, text:'Unused', xPercent:20 + index * 20, yPercent:50 },
+  const layouts = Array.from({ length:3 }, (_, index) => ({
+    piece:{ kind:'answer' as const, pageI:0, placement:null, styleNo:3, text:'Unused', xPercent:20 + index * 20, yPercent:50 },
     rect:{ x:100 + index * 100, y:200, width:40, height:30 },
     metrics:{ width:40, padding:2, fontSizePixels:12 }, isVisible:true
   }));
   const assigned:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, placement:{ page, blank } } };
   const neighborPage = { ...page, conclusion:{ ...page.conclusion,
     parts:[{ ...blank, playerAnswerIndex:-1 }] } };
-  const neighbor:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, conclusionPageI:2 } };
+  const neighbor:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, pageI:2 } };
   const pages:BookPage[] = [page, { kind:'blank', headingText:'', chapterNo:1 },
     neighborPage, { kind:'blank', headingText:'', chapterNo:1 }];
   return { claim, layouts, assigned, neighbor, pages, neighborPage };

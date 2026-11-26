@@ -4,6 +4,7 @@ import AnswerSet from '@/conclusions/types/AnswerSet';
 import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import Conclusion from '@/conclusions/types/Conclusion';
 import { generateAnswerSetIdToPieceStyleNoMap } from '../answerSetPieceStyleUtil';
+import { NOTE_PIECE_STYLE_NO } from '../pieces/pieceFlairUtil';
 
 function _createConclusion(answerSets:readonly AnswerSet[], id:string = 'one'):Conclusion {
   return {
@@ -46,6 +47,7 @@ describe('answerSetPieceStyleUtil', () => {
       const sets = Array.from({ length:10 }, (_, index) => createAnswerSet([String(index)], `category-${index}`));
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
       expect(sets.map(set => styles[set.id])).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+      expect(Object.values(styles)).not.toContain(NOTE_PIECE_STYLE_NO);
     });
 
     it('uses category IDs for extended built-ins', () => {

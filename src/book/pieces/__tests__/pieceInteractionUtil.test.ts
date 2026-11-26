@@ -10,7 +10,8 @@ import { startPageFlip } from '@/book/drawing/pages';
 import { goNextPage, goPrevPage } from '@/book/navigationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '@/book';
 import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
-  getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
+  getVisibleBookPieces, moveBookPieceDrag, releaseBookPieceDrag } from '../pieceInteractionUtil';
+import { NOTE_PIECE_STYLE_NO } from '../pieceFlairUtil';
 
 function _createBookState() {
   const bookState = createDefaultBookState();
@@ -22,9 +23,9 @@ function _createBookState() {
   const secondPage:ConclusionPage = {
     ...firstPage, conclusion:{ ...firstPage.conclusion, id:'second', title:'Second' }
   };
-  const lower = { conclusionPageI:0, text:'First', styleNo:3,
+  const lower = { kind:'answer' as const, pageI:0, text:'First', styleNo:3,
     xPercent:50, yPercent:50, placement:null };
-  const upper = { ...lower, conclusionPageI:1 };
+  const upper = { ...lower, pageI:1 };
   bookState.pieceStack = [lower, upper];
   bookState.pages = [firstPage, secondPage];
   bookState.pageNo = 1;
@@ -59,6 +60,28 @@ function _createDraggableBookState() {
 }
 
 describe('pieceInteractionUtil', () => {
+  it('moves a note across the spread and leaves it on the destination page', () => {
+    const { bookState, layout } = _createBookState();
+    const note = { kind:'note' as const, pageI:0, text:'Remember this', styleNo:NOTE_PIECE_STYLE_NO,
+      xPercent:50, yPercent:50 };
+    const record = { ...layout.pieceLayouts[0], piece:note, rect:{ x:280, y:255, width:40, height:30 } };
+    bookState.pieceStack = [note];
+    layout.pieceLayouts = [record];
+
+    expect(beginBookPieceDrag(bookState, 300, 270)).toBe(true);
+    moveBookPieceDrag(bookState, 700, 270);
+    expect(note.pageI).toBe(1);
+    moveBookPieceDrag(bookState, 300, 270);
+    expect(note.pageI).toBe(0);
+    releaseBookPieceDrag(bookState, 700, 270);
+
+    expect(note).toMatchObject({ pageI:1, xPercent:50, yPercent:50 });
+    layout.isSinglePageView = true;
+    expect(getVisibleBookPieces(bookState)).not.toContain(note);
+    bookState.pageNo = 2;
+    expect(getVisibleBookPieces(bookState)).toContain(note);
+  });
+
   describe('drag cancellation on book transitions', () => {
     it('cancels when closing programmatically without undoing movement or stacking', () => {
       const { bookState, lower } = _createDraggableBookState();
@@ -318,7 +341,7 @@ describe('pieceInteractionUtil', () => {
   describe('getVisibleBookPieces()', () => {
     it('hides locked conclusion pieces and restores them unchanged on unlock', () => {
       const { bookState, lower, upper } = _createBookState();
-      const page = bookState.pages[upper.conclusionPageI] as ConclusionPage;
+      const page = bookState.pages[upper.pageI] as ConclusionPage;
       const stack = bookState.pieceStack;
       const original = structuredClone(stack);
       page.conclusion.isLocked = true;
@@ -384,7 +407,7 @@ describe('pieceInteractionUtil', () => {
       const { bookState, lower, upper } = _createBookState();
       const page = bookState.pages[0];
       bookState.pages.push({ ...page }, { kind:'blank', headingText:'', chapterNo:1 });
-      const appended = { ...lower, conclusionPageI:2 };
+      const appended = { ...lower, pageI:2 };
       bookState.pieceStack.push(appended);
       expect(getVisibleBookPieces(bookState)).toEqual([lower, upper]);
       bookState.pageNo = 3;
@@ -407,7 +430,7 @@ describe('pieceInteractionUtil', () => {
 
     it('promotes repeatedly without duplicating references or changing conclusion ownership', () => {
       const { bookState, layout, lower, upper } = _createBookState();
-      const conclusionPageIndexes = [lower.conclusionPageI, upper.conclusionPageI];
+      const conclusionPageIndexes = [lower.pageI, upper.pageI];
       const pages = [...bookState.pages];
       bringBookPieceToFront(bookState, lower);
       bringBookPieceToFront(bookState, upper);
@@ -416,7 +439,7 @@ describe('pieceInteractionUtil', () => {
       expect(bookState.pieceStack[0]).toBe(lower);
       expect(bookState.pieceStack[1]).toBe(upper);
       expect(layout.pieceLayouts).toHaveLength(2);
-      expect([lower.conclusionPageI, upper.conclusionPageI]).toEqual(conclusionPageIndexes);
+      expect([lower.pageI, upper.pageI]).toEqual(conclusionPageIndexes);
       expect(bookState.pages).toEqual(pages);
     });
   });

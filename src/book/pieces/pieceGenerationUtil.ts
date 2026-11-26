@@ -7,6 +7,8 @@ import BookState from '../types/BookState';
 import Piece from '../types/Piece';
 import { IDENTITIES_PER_PAGE } from '../identityLayoutConstants';
 
+type AnswerPiece = Extract<Piece, { kind:'answer' }>;
+
 // Piece centers leave room for half a piece above/below, clear of the heading and page number.
 const FIRST_ROW_Y_PERCENT = 14;
 const LAST_ROW_Y_PERCENT = 86;
@@ -50,7 +52,7 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
     if (page.kind !== 'conclusion') continue;
     assert(pageI % 2 === 0, 'Conclusion pages must be on the left.');
     assert(bookState.pages[pageI + 1]?.kind === 'blank', 'Conclusion pages must have a blank right page.');
-    const answerGroups:Piece[][] = [];
+    const answerGroups:AnswerPiece[][] = [];
     const emittedCategoryIds = new Set<string>();
     for (const part of page.conclusion.parts) {
       if (part.type !== 'blank') continue;
@@ -62,7 +64,7 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
 
       // Emit each category's ordered answers once; category validation guarantees disjoint membership.
       emittedCategoryIds.add(answerSet.id);
-      const groupPieces:Piece[] = answers.map(text => ({ conclusionPageI:pageI, styleNo, text, xPercent:0, yPercent:0, placement:null }));
+      const groupPieces:AnswerPiece[] = answers.map(text => ({ kind:'answer', pageI, styleNo, text, xPercent:0, yPercent:0, placement:null }));
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
     }

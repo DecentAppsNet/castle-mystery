@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react';
 import { assertNonNullable } from 'decent-portal';
 
 import Canvas from '@/components/canvas/Canvas';
@@ -15,11 +15,20 @@ import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
-import { drawBook, showBook, hideBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseLeave, onBookMouseWheel, endBookPieceDrag } from '@/book';
+import { drawBook, showBook, hideBook, findBookNoteClick, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseLeave, onBookMouseWheel, endBookPieceDrag } from '@/book';
 import BookState from '@/book/types/BookState';
+import Piece from '@/book/types/Piece';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
 import { DRAW_FPS_COUNTER } from '@/developer/config';
 import { updateAndDrawFps } from '@/developer/fpsUtil';
+import AddPageNoteDialog from './dialogs/AddPageNoteDialog';
+
+type NoteAction = { book:BookState; piece:Piece; isNew:boolean };
+type NotePress = NoteAction & { clientX:number; clientY:number };
+
+function _isClickDistance(press:NotePress, clientX:number, clientY:number):boolean {
+  return Math.hypot(clientX - press.clientX, clientY - press.clientY) <= 4;
+}
 
 type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
@@ -70,9 +79,11 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
   const cancelBookDragRef = useRef<(() => void)|null>(null);
   const draggedBookRef = useRef<BookState|null>(null);
   const finishBookHideRef = useRef<((completed:boolean) => void)|null>(null);
+  const [noteAction, setNoteAction] = useState<NoteAction|null>(null);
+  const notePressRef = useRef<NotePress|null>(null);
 
   function _isInputDisabled():boolean {
-    return isGameDisabled() || !acceptedGameStateRef.current
+    return noteAction !== null || isGameDisabled() || !acceptedGameStateRef.current
       || (bookState?.isVisible === true && (bookState.animationKind !== null || bookState.claimState !== null));
   }
 
@@ -131,6 +142,21 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
       if (draggedBookState.pieceDragState === null || draggedBookRef.current !== draggedBookState
         || !acceptedGameStateRef.current || acceptedGameStateRef.current !== draggedGameState
         || isGameDisabled() || (!isRelease && (event.buttons & 1) === 0)) return _cancel();
+
+      const press = notePressRef.current;
+      if (press && _isClickDistance(press, event.clientX, event.clientY)) {
+        if (isRelease) {
+          _cancel();
+          notePressRef.current = null;
+          if (event.target !== canvas || press.isNew || _isInputDisabled()) return;
+          const rect = canvas.getBoundingClientRect();
+          const hit = findBookNoteClick(draggedBookState, (event.clientX - rect.left) * canvas.width / rect.width,
+            (event.clientY - rect.top) * canvas.height / rect.height);
+          if (hit?.piece === press.piece) setNoteAction(press);
+        }
+        return;
+      }
+      notePressRef.current = null;
 
       const rect = canvas.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return _cancel();
@@ -216,6 +242,7 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
 
   return <div className={styles.container} onMouseLeave={() => {
     pointerClientPositionRef.current = null;
+    notePressRef.current = null;
     if (bookState) onBookMouseLeave(bookState);
   }}>
     <Canvas 
@@ -227,6 +254,7 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
       onPageViewingChange={(isViewingPage) => {
         if (!isViewingPage) {
           cancelBookDragRef.current?.();
+          notePressRef.current = null;
           if (bookState) onBookMouseLeave(bookState);
         }
         const currentGameState = acceptedGameStateRef.current;
@@ -236,12 +264,15 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
         _handleIsPlayingChanged(false);
       }}
       onMouseDown={(e) => {
+        notePressRef.current = null;
         if (cancelBookDragRef.current) return;
         if (_isInputDisabled()) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
         if (bookState?.isVisible) {
+          const hit = e.button === 0 ? findBookNoteClick(bookState, canvasX, canvasY) : null;
+          if (hit) notePressRef.current = { ...hit, book:bookState, clientX:e.clientX, clientY:e.clientY };
           if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onChapterLevelSelected, loadedLevelUrl)) {
             e.preventDefault();
             _startBookDragTracking(e.currentTarget, bookState);
@@ -258,6 +289,15 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
         const [gameX, gameY] = canvasToGamePosition(x, y, acceptedGameStateRef.current.scalingFactors);
         mouseDown(gameX, gameY);
       }}
+      onClick={(e) => {
+        const press = notePressRef.current;
+        notePressRef.current = null;
+        if (!press?.isNew || press.book !== bookState || _isInputDisabled() || !_isClickDistance(press, e.clientX, e.clientY)) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const hit = findBookNoteClick(press.book, (e.clientX - rect.left) * e.currentTarget.width / rect.width,
+          (e.clientY - rect.top) * e.currentTarget.height / rect.height);
+        if (hit?.isNew && hit.piece.pageI === press.piece.pageI) setNoteAction(press);
+      }}
       onMouseUp={(e) => {
         if (cancelBookDragRef.current) return;
         if (_isInputDisabled()) return;
@@ -271,6 +311,7 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
       onMouseMove={(e) => {
         pointerClientPositionRef.current = [e.clientX, e.clientY];
         if (cancelBookDragRef.current) return;
+        if (notePressRef.current && !_isClickDistance(notePressRef.current, e.clientX, e.clientY)) notePressRef.current = null;
         if (_isInputDisabled()) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         if (bookState?.isVisible) {
@@ -295,6 +336,20 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
         mouseWheel(e.deltaY);
       }}
     />
+    {noteAction && <AddPageNoteDialog isOpen={true}
+      existingText={noteAction.isNew ? undefined : noteAction.piece.text}
+      onCancel={() => setNoteAction(null)}
+      onDelete={noteAction.isNew ? undefined : () => {
+        const { book, piece } = noteAction;
+        book.pieceStack = book.pieceStack.filter(candidate => candidate !== piece);
+        setNoteAction(null);
+      }}
+      onSubmit={text => {
+        const { book, piece, isNew } = noteAction;
+        piece.text = text;
+        if (isNew) book.pieceStack = [...book.pieceStack, piece];
+        setNoteAction(null);
+      }} />}
   </div>;
 }
 

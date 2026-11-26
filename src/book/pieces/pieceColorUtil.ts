@@ -8,8 +8,9 @@ import BookState from '../types/BookState';
 import Piece from '../types/Piece';
 
 export function getBookPieceBackgroundColor(bookState:Readonly<BookState>, piece:Readonly<Piece>):string {
+  if (piece.kind === 'note') return getPieceFlairProfile(piece.styleNo).pieceColor;
   // Resolve styles within their owning conclusion, independently of visible layout records.
-  const page = bookState.pages[piece.conclusionPageI];
+  const page = bookState.pages[piece.pageI];
   assertNonNullable(page);
   assert(page.kind === 'conclusion');
   const blanks = page.conclusion.parts

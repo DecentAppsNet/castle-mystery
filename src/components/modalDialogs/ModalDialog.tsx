@@ -1,9 +1,10 @@
 import styles from './ModalDialog.module.css';
-import {PropsWithChildren} from "react";
+import {PropsWithChildren, type KeyboardEventHandler} from "react";
 
 interface IProps {
   isOpen:boolean,
   onCancel?:() => void,
+  onKeyDown?:KeyboardEventHandler<HTMLDivElement>,
   title:string
 }
 
@@ -18,7 +19,7 @@ function ModalDialog(props:PropsWithChildren<IProps>) {
   const fullscreenOverlayStyle = `${styles.fullscreenOverlay} ${onCancel ? styles.clickable : ''}`;
   return (
     <div className={fullscreenOverlayStyle} onMouseDown={onCancel}>
-      <div className={styles.dialog} onClick={_doNothing} onMouseDown={_doNothing}>
+      <div className={styles.dialog} onClick={_doNothing} onMouseDown={_doNothing} onKeyDown={props.onKeyDown}>
         <h1>{title}</h1>
         {children}
       </div>

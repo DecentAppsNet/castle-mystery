@@ -139,6 +139,11 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
   setPageNavigationButtonVisibility(bookState);
 }
 
+export function calcPageRect(spread:Readonly<Rect>, pageNo:number):Rect {
+  const width = spread.width / 2;
+  return { ...spread, width, x:spread.x + (isLeftPageNo(pageNo) ? 0 : width) };
+}
+
 export function calcPageViewOffsetX(bookState:BookState):number {
   const { layout } = bookState;
   assertNonNullable(layout);

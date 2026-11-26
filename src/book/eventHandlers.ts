@@ -6,7 +6,7 @@ import { assert } from "decent-portal";
 import { isPositionInRect } from "@/game/rectUtil";
 import BookState from "./types/BookState";
 import { hideBook } from "./drawing/bookAnimationUtil";
-import { calcPageViewOffsetX } from "./drawing/bookLayoutUtil";
+import { calcPageRect, calcPageViewOffsetX, isLeftPageNo } from "./drawing/bookLayoutUtil";
 import { findControlAtPoint } from "@/canvasControls";
 import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
@@ -14,6 +14,27 @@ import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBo
   moveBookPieceDrag } from "./pieces";
 import { claimBookConclusion } from './claiming';
 import { findVisitChapterTarget } from './chapterNavigationUtil';
+import { NOTE_PIECE_STYLE_NO } from './pieces';
+import Piece from './types/Piece';
+
+export function findBookNoteClick(bookState:BookState, x:number, y:number):{ piece:Piece; isNew:boolean }|null {
+  const { layout, pageNo } = bookState;
+  if (!bookState.isVisible || bookState.animationKind || bookState.claimState || !layout
+    || layout.pieceLayoutsPageNo !== pageNo || _findControlAtPoint(bookState, x, y) !== null) return null;
+  const hit = findBookPieceAtPoint(bookState, x, y);
+  if (hit) return hit.kind === 'note' ? { piece:hit, isNew:false } : null;
+  if (layout.pieceSlotLayouts.some(slot => isPositionInRect(x, y, slot.rect))) return null;
+
+  const leftPageNo = isLeftPageNo(pageNo) ? pageNo : pageNo - 1;
+  const spread = { ...layout.rect, x:layout.rect.x + calcPageViewOffsetX(bookState) };
+  for (const candidate of layout.isSinglePageView ? [pageNo] : [leftPageNo, leftPageNo + 1]) {
+    const rect = calcPageRect(spread, candidate);
+    if (!bookState.pages[candidate - 1] || !isPositionInRect(x, y, rect)) continue;
+    return { isNew:true, piece:{ kind:'note', pageI:candidate - 1, styleNo:NOTE_PIECE_STYLE_NO, text:'',
+      xPercent:(x - rect.x) / rect.width * 100, yPercent:(y - rect.y) / rect.height * 100 } };
+  }
+  return null;
+}
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;

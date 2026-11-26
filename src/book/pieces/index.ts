@@ -7,5 +7,5 @@ export { beginBookPieceDrag, bringBookPieceToFront, detachBookPiece, endBookPiec
 export { isCurrentPieceSlot } from './pieceSlotTargetUtil';
 export { prepareBookPieceSlotPresentations } from './pieceSlotPresentationUtil';
 export { getBookPieceBackgroundColor } from './pieceColorUtil';
-export { getPieceFlairProfile } from './pieceFlairUtil';
+export { getPieceFlairProfile, NOTE_PIECE_STYLE_NO } from './pieceFlairUtil';
 export { calcPieceSlotGlintPoint } from './pieceSlotGlintUtil';

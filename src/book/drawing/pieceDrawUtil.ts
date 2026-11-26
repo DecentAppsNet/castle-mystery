@@ -11,6 +11,7 @@ import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
 import { getPieceFlairProfile, getBookPieceBackgroundColor } from "../pieces";
 import PieceDragState from '../types/PieceDragState';
 import BookState from '../types/BookState';
+import { calcPageRect } from './bookLayoutUtil';
 
 export function getPieceSlotColor(styleNo:number):string {
 	return getPieceFlairProfile(styleNo).pieceSlotColor;
@@ -40,8 +41,9 @@ export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readon
 		const metrics = extracted?.metrics ?? measureBookTextBox(piece.text, bookRect.width / 2, lineHeight, context, fontSizePixels);
 		const width = metrics.width;
 		const height = extracted?.height ?? lineHeight;
-		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - width / 2;
-		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - height / 2;
+		const bounds = piece.kind === 'note' ? calcPageRect(bookRect, piece.pageI + 1) : bookRect;
+		const x = bounds.x + bounds.width * piece.xPercent / 100 - width / 2;
+		const y = bounds.y + bounds.height * piece.yPercent / 100 - height / 2;
 		const rect = { x, y, width, height };
 		return { piece, rect, metrics, isVisible:true };
 	});

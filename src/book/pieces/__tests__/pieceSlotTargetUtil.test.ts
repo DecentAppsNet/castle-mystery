@@ -21,7 +21,7 @@ function _createPreparedBook(conclusionPageI:number = 0) {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionPageI, text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
+  const piece = { kind:'answer' as const, pageI:conclusionPageI, text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];

@@ -4,6 +4,10 @@
 import { assert } from 'decent-portal';
 import FlairProfile from './types/FlairProfile';
 
+export const NOTE_PIECE_STYLE_NO = -1;
+const NOTE_FLAIR_PROFILE:FlairProfile = {
+  borderPolygon:[[0, 0], [0, 1]], pieceColor:'#fff', pieceSlotColor:'#fff'
+};
 const RESERVED_STYLE_COUNT = 3;
 const FLAIR_PROFILES:ReadonlyArray<FlairProfile> = [
   { borderPolygon:[[0, 0], [1, .55], [.40, .55], [.75, .7], [0, .75], [.40, .80], [.35, 1]],
@@ -33,5 +37,5 @@ function _styleNoToProfileI(styleNo:number):number {
 }
 
 export function getPieceFlairProfile(styleNo:number):FlairProfile {
-  return FLAIR_PROFILES[_styleNoToProfileI(styleNo)];
+  return styleNo === NOTE_PIECE_STYLE_NO ? NOTE_FLAIR_PROFILE : FLAIR_PROFILES[_styleNoToProfileI(styleNo)];
 }

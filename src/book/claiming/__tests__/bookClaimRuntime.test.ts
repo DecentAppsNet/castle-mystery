@@ -148,7 +148,7 @@ describe('book claim runtime', () => {
 
     it('captures success and completes only at 5500, retaining the claim until message fade ends at 7000', () => {
       const { bookState, page, blank, otherBlank, layout } = _createFixture(true);
-      const placements = bookState.pieceStack.map(piece => piece.placement);
+      const placements = bookState.pieceStack.map(piece => piece.kind === 'answer' && piece.placement);
       claimBookConclusion(bookState, 1, STARTED_AT);
       const claim = bookState.claimState!;
       otherBlank.correctAnswerIndexes.splice(0, 1, 0);
@@ -163,7 +163,7 @@ describe('book claim runtime', () => {
       expect(claim.resultApplied).toBe(true);
       expect(claim.ejectedCount).toBe(0);
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
-      bookState.pieceStack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
+      bookState.pieceStack.forEach((piece, i) => expect(piece.kind === 'answer' && piece.placement).toBe(placements[i]));
       _expectHiddenControls(layout);
       updateBookClaim(bookState, STARTED_AT + 5999);
       expect(bookState.claimState).toBe(claim);
@@ -184,14 +184,14 @@ describe('book claim runtime', () => {
 
     it('catches up skipped success and recovery without ejecting or repeating completion', () => {
       const { bookState, page, blank, otherBlank } = _createFixture(true);
-      const placements = bookState.pieceStack.map(piece => piece.placement);
+      const placements = bookState.pieceStack.map(piece => piece.kind === 'answer' && piece.placement);
       claimBookConclusion(bookState, 1, STARTED_AT);
       updateBookClaim(bookState, STARTED_AT + 1000000);
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.isComplete).toBe(true);
       expect(page.conclusion.incorrectGuessCount).toBe(0);
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
-      bookState.pieceStack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
+      bookState.pieceStack.forEach((piece, i) => expect(piece.kind === 'answer' && piece.placement).toBe(placements[i]));
       const after = structuredClone(bookState);
       updateBookClaim(bookState, STARTED_AT + 1000000);
       expect(bookState).toEqual(after);
@@ -208,8 +208,8 @@ describe('book claim runtime', () => {
       setSeed(503);
       updateBookClaim(bookState, STARTED_AT + 3000);
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, 1]);
-      expect(bookState.pieceStack[0].placement).toBeNull();
-      expect(bookState.pieceStack[1].placement?.blank).toBe(otherBlank);
+      expect(bookState.pieceStack[0]).toHaveProperty('placement', null);
+      expect(bookState.pieceStack[1]).toHaveProperty('placement.blank', otherBlank);
       const firstResult = structuredClone(bookState);
       updateBookClaim(bookState, STARTED_AT + 3000);
       updateBookClaim(bookState, STARTED_AT + 3499);
@@ -279,7 +279,7 @@ describe('book claim runtime', () => {
       const otherSpread = _createFixture(false, 1, page.conclusion.id);
       bookState.pages[0] = otherSpread.page;
       bookState.pieceStack.push(...otherSpread.bookState.pieceStack);
-      const untouchedPieces = bookState.pieceStack.filter(piece => piece.conclusionPageI === 0);
+      const untouchedPieces = bookState.pieceStack.filter(piece => piece.pageI === 0);
       const beforePieces = structuredClone(untouchedPieces);
       const beforeConclusion = structuredClone(otherSpread.page.conclusion);
       const rect = findControlRect(layout.controlLayout, 'claim');
@@ -436,7 +436,7 @@ describe('book claim runtime', () => {
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.incorrectGuessCount).toBe(1);
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, 1]);
-      expect(bookState.pieceStack[1].placement?.blank).toBe(otherBlank);
+      expect(bookState.pieceStack[1]).toHaveProperty('placement.blank', otherBlank);
     });
 
     it('hideBook discards the claim before starting dismissal and never applies remaining results', () => {
