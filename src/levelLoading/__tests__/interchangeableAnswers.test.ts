@@ -3,7 +3,6 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import { countConclusionMistakes } from '@/game/conclusions/conclusionUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
-import { claimConclusion } from '@/homeScreen/conclusionsView/interactions/conclusions';
 import { loadLevelForTest, loadValidLevelForTest } from './testLevelUtil';
 import text from './fixtures/interchangeable-answers.md?raw';
 import charactersText from './fixtures/conclusions-effective-characters.md?raw';
@@ -15,29 +14,25 @@ function _loadMystery(source = text) {
   return { level, conclusion, blanks };
 }
 
-describe('loading and claiming interchangeable answers', () => {
+describe('loading and validating interchangeable answers', () => {
   afterEach(clearSeed);
 
-  it('accepts both distinct Jack/Jill permutations and claims completion without mutating the input', () => {
+  it('accepts both distinct Jack/Jill permutations without completing the conclusion', () => {
     const { conclusion, blanks } = _loadMystery();
     blanks[0].playerAnswerIndex = 0;
     blanks[1].playerAnswerIndex = 1;
     expect(countConclusionMistakes(conclusion)).toBe(0);
-    let completed = false;
-    expect(claimConclusion(conclusion, () => {}, updated => { completed = updated.isComplete; })).toBe(true);
-    expect(completed).toBe(true);
     expect(conclusion.isComplete).toBe(false);
     blanks[0].playerAnswerIndex = 1;
     blanks[1].playerAnswerIndex = 0;
     expect(countConclusionMistakes(conclusion)).toBe(0);
   });
 
-  it('rejects both duplicate permutations through correctness and claiming', () => {
+  it('reports a mistake for both duplicate permutations', () => {
     const { conclusion, blanks } = _loadMystery();
     blanks[0].playerAnswerIndex = 0;
     blanks[1].playerAnswerIndex = 0;
     expect(countConclusionMistakes(conclusion)).toBe(1);
-    expect(claimConclusion(conclusion, () => { throw Error('Must not close'); }, () => { throw Error('Must not complete'); })).toBe(false);
     blanks[0].playerAnswerIndex = 1;
     blanks[1].playerAnswerIndex = 1;
     expect(countConclusionMistakes(conclusion)).toBe(1);

@@ -4,14 +4,13 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
-import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateTime } from "./interactions/gameplay";
 import { msecsToMinutes } from '@/common/timeUtil';
 import GameState from "@/game/types/GameState";
-import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
-import Conclusion from "@/game/conclusions/types/Conclusion";
-import WinLevelDialog from "./dialogs/WinLevelDialog";
-import { changeLevel, continueToNextLevel, resetLevel } from "./interactions/levels";
+import { changeLevel, resetLevel } from "./interactions/levels";
+import { urlToFilename } from '@/common/urlUtil';
+import { pushLevelChanges } from '@/persistence/levelChangeQueue';
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
@@ -35,13 +34,7 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
-function _isLevelComplete(conclusions:ReadonlyArray<Conclusion>):boolean {
-  return conclusions.every(conclusion => !conclusion.isLocked && conclusion.isComplete);
-}
-
-function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>, nextConclusions:ReadonlyArray<Conclusion>):boolean {
-  return _isLevelComplete(nextConclusions) && !_isLevelComplete(previousConclusions);
-}
+function _ignoreLegacyConclusionUpdate():void {}
 
 function HomeScreen() {
   const applicationRootRef = useRef<HTMLDivElement|null>(null);
@@ -51,7 +44,6 @@ function HomeScreen() {
   const initPromiseRef = useRef<Promise<InitResults>|null>(null);
   const saveCoordinatorRef = useRef<LevelSaveCoordinator|null>(null);
   const saveGameStateRef = useRef<GameState|null>(null);
-  const previousConclusionsRef = useRef<readonly Conclusion[]>([]);
   const isGameDisabledRef = useRef(true);
   const [isGameDisabled, setIsGameDisabled] = useState(true);
   const [loadedLevel, setLoadedLevel] = useState<{ gameState:GameState, levelUrl:string }|null>(null);
@@ -62,12 +54,8 @@ function HomeScreen() {
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
-  const [winSynopsis, setWinSynopsis] = useState<string>("");
-  const [conclusions, setConclusions] = useState<Conclusion[]>([]);
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
-  const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
   const [, setActiveCharacterId] = useState<string>("");
-  const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
 
@@ -93,7 +81,6 @@ function HomeScreen() {
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave,
       message => { if (loadRequestRef.current.isMounted) setStorageErrorMessage(message); });
-    previousConclusionsRef.current = prepared.gameState.conclusions;
     setLoadedLevel({ gameState:prepared.gameState, levelUrl:prepared.levelUrl });
   }
 
@@ -165,8 +152,6 @@ function HomeScreen() {
       setMinutes(initResults.minutes);
       setBookState(initResults.bookState);
       _publishPreparedLevelState(initResults, initResults.bookState);
-      setWinSynopsis(initResults.gameState.winSynopsis);
-      setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
     }).catch((error:unknown) => {
@@ -179,23 +164,10 @@ function HomeScreen() {
     };
   }, [isInitialClosedFramePainted]);
 
-  function _handleConclusionsChanged(nextConclusions:Conclusion[]) {
-    if (_shouldOpenWinLevelDialog(previousConclusionsRef.current, nextConclusions)) setModalDialogName(WinLevelDialog.name);
-    previousConclusionsRef.current = nextConclusions;
-    setConclusions(nextConclusions);
-  }
-
-  function _handleManualConclusionsUpdate(nextConclusions:Conclusion[]) {
-    _handleConclusionsChanged(nextConclusions);
-  }
-
   function _handleRevealLevel() {
-    const nextConclusions = conclusions.map(conclusion => ({
-      ...conclusion,
-      isLocked:false,
-      isComplete:true
-    }));
-    updateConclusions(nextConclusions, _handleManualConclusionsUpdate);
+    if (_isGameDisabled()) return;
+    assertNonNullable(loadedLevel);
+    void pushLevelChanges(urlToFilename(loadedLevel.levelUrl), { kind:'setLevelComplete' }).catch(_reportBookStorageError);
   }
 
   function _handleResetLevel() {
@@ -205,8 +177,8 @@ function HomeScreen() {
     void resetLevel({ imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
-      setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
+      setIsPlaying, setMinutes, setWinSynopsis:_ignoreLegacyConclusionUpdate, setConclusions:_ignoreLegacyConclusionUpdate,
+      setDiscoveries, setConclusionClaimCooldowns:_ignoreLegacyConclusionUpdate, setActiveCharacterId, setModalDialogName:_ignoreLegacyConclusionUpdate });
   }
 
   function _handleLevelSelect(levelUrl:string, hideBookFirst:boolean = false) {
@@ -217,8 +189,8 @@ function HomeScreen() {
     void changeLevel({ imageSet:imageSetRef.current, levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:() => _closeCurtain(hideBookFirst),
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
-      setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
+      setIsPlaying, setMinutes, setWinSynopsis:_ignoreLegacyConclusionUpdate, setConclusions:_ignoreLegacyConclusionUpdate,
+      setDiscoveries, setConclusionClaimCooldowns:_ignoreLegacyConclusionUpdate, setActiveCharacterId, setModalDialogName:_ignoreLegacyConclusionUpdate });
   }
 
   const isSliderAtRightmostPosition = minutes >= toMinutes;
@@ -284,7 +256,7 @@ function HomeScreen() {
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 
-          onConclusionsChanged={_handleConclusionsChanged} 
+          onConclusionsChanged={_ignoreLegacyConclusionUpdate}
           onDiscoveriesChanged={setDiscoveries} 
           onStateChanged={_handleStateChanged}
           beforeWorldFrame={state => { if (state === saveGameStateRef.current) saveCoordinatorRef.current?.beforeFrame(); }}
@@ -304,39 +276,11 @@ function HomeScreen() {
       </div>
 
       {gameState && <div className={styles.sidePane}>
-        <div className={styles.conclusionsPane}>
-          <ConclusionsView 
-            conclusions={conclusions} 
-            imageSet={gameState.imageSet} 
-            conclusionClaimCooldowns={conclusionClaimCooldowns}
-            onIncorrectClaim={(conclusionId) => {
-              setConclusionClaimCooldowns(from => ({
-                ...from,
-                [conclusionId]: Date.now() + 2 * 60 * 1000
-              }));
-            }}
-            onUpdate={(nextConclusions) => { updateConclusions(nextConclusions, _handleManualConclusionsUpdate)} }
-          />
-        </div>
         <div className={styles.discoveriesPane}>
           <DiscoveriesView discoveries={discoveries} />
         </div>
       </div>}
       {storageErrorMessage && <p className={styles.storageError} role="alert">{storageErrorMessage}</p>}
-      {loadedLevel && bookState && <WinLevelDialog 
-        synopsis={winSynopsis} 
-        isOpen={modalDialogName === WinLevelDialog.name} 
-        onContinue={() => {
-          assertNonNullable(imageSetRef.current);
-          void continueToNextLevel({imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, levelUrls:bookState.levelUrls,
-            onLevelPrepared:_publishPreparedLevelState, setIsPlaying,
-            setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-            setModalDialogName, loadRequest:loadRequestRef.current, closeCurtain:_closeCurtain,
-            saveCoordinator:saveCoordinatorRef.current,
-            onLoadingFailed:_handleLoadingFailed
-          }); }}
-        onReturn={() => setModalDialogName(null)} 
-      />}
     </div>
   );
 }
