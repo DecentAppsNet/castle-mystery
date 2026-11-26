@@ -151,6 +151,7 @@ async function _put(db:IDBDatabase, storeName:string, objectToStore:object):Prom
   objectStore.put(objectToStore);
   return new Promise((resolve, reject) => {
     transaction.onerror = (event:any) => reject(`Failed to put to "${storeName} with error code ${event.target.errorCode}.`);
+    transaction.onabort = () => reject(transaction.error ?? new Error(`Write to "${storeName}" was aborted.`));
     transaction.oncomplete = () => resolve();
   });
   
