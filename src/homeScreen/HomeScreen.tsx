@@ -177,8 +177,7 @@ function HomeScreen() {
     void resetLevel({ imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setWinSynopsis:_ignoreLegacyConclusionUpdate, setConclusions:_ignoreLegacyConclusionUpdate,
-      setDiscoveries, setConclusionClaimCooldowns:_ignoreLegacyConclusionUpdate, setActiveCharacterId, setModalDialogName:_ignoreLegacyConclusionUpdate });
+      setIsPlaying, setMinutes, setDiscoveries, setActiveCharacterId });
   }
 
   function _handleLevelSelect(levelUrl:string, hideBookFirst:boolean = false) {
@@ -189,8 +188,7 @@ function HomeScreen() {
     void changeLevel({ imageSet:imageSetRef.current, levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:() => _closeCurtain(hideBookFirst),
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setWinSynopsis:_ignoreLegacyConclusionUpdate, setConclusions:_ignoreLegacyConclusionUpdate,
-      setDiscoveries, setConclusionClaimCooldowns:_ignoreLegacyConclusionUpdate, setActiveCharacterId, setModalDialogName:_ignoreLegacyConclusionUpdate });
+      setIsPlaying, setMinutes, setDiscoveries, setActiveCharacterId });
   }
 
   const isSliderAtRightmostPosition = minutes >= toMinutes;

@@ -9,7 +9,6 @@ import { updateImageSetForLevel } from "@/game/imageSetUtil";
 import { ImageSet } from '@/imageLoading';
 import Discoveries from "@/game/types/Discoveries";
 import PreparedLevelState from '../types/PreparedLevelState';
-import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { msecsToMinutes } from '@/common/timeUtil';
@@ -27,19 +26,14 @@ type ChangeLevelParams = {
   onLevelPrepared:(prepared:PreparedLevelState) => void,
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
-  setWinSynopsis:Dispatch<SetStateAction<string>>,
-  setConclusions:Dispatch<SetStateAction<Conclusion[]>>,
   setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
-  setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>,
-  setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setModalDialogName:Dispatch<SetStateAction<string|null>>
+  setActiveCharacterId:Dispatch<SetStateAction<string>>
 };
 
 async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:(prepared:PreparedLevelState) => void,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
-  setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
-  setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setModalDialogName:Dispatch<SetStateAction<string|null>>, loadRequest:LevelLoadRequest, imageSet:ImageSet):Promise<void> {
+  setDiscoveries:Dispatch<SetStateAction<Discoveries>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
+  loadRequest:LevelLoadRequest, imageSet:ImageSet):Promise<void> {
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
   if (!level) {
@@ -55,12 +49,8 @@ async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:(prepared:Pre
   onLevelPrepared(prepared);
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
-  setWinSynopsis(gameState.winSynopsis);
-  setConclusions(gameState.conclusions);
   setDiscoveries(createDiscoveries(gameState));
-  setConclusionClaimCooldowns({});
   setActiveCharacterId(gameState.activeCharacterId);
-  setModalDialogName(null);
 
   await setLastLevelUrl(levelUrl);
 }
@@ -106,19 +96,12 @@ function _changeLevel({
   onLevelPrepared,
   setIsPlaying,
   setMinutes,
-  setWinSynopsis,
-  setConclusions,
   setDiscoveries,
-  setConclusionClaimCooldowns,
-  setActiveCharacterId,
-  setModalDialogName
+  setActiveCharacterId
 }:ChangeLevelParams, resetSave:boolean):Promise<void> {
   return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, onLevelPrepared, setIsPlaying, setMinutes,
-    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-    setModalDialogName, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
+    setDiscoveries, setActiveCharacterId, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
 }
-
-type ContinueToNextLevelParams = ChangeLevelParams & { levelUrls:readonly string[] };
 
 /** Handles level selection, flushing outgoing paused time before loading the target. */
 export function changeLevel(params:ChangeLevelParams):Promise<void> {
@@ -128,17 +111,4 @@ export function changeLevel(params:ChangeLevelParams):Promise<void> {
 /** Handles Reset by clearing current progress before reloading the same level. */
 export function resetLevel(params:ChangeLevelParams):Promise<void> {
   return _changeLevel(params, true);
-}
-
-/** Handles Continue from the victory dialog; no next level only dismisses the dialog. */
-export function continueToNextLevel(params:ContinueToNextLevelParams):Promise<void> {
-  const { levelUrl, levelUrls, ...changeParams } = params;
-  const levelI = levelUrls.indexOf(levelUrl);
-  const nextLevelUrl = levelI === -1 ? undefined : levelUrls[levelI + 1];
-  if (!nextLevelUrl) {
-    changeParams.setModalDialogName(null);
-    return Promise.resolve();
-  }
-
-  return changeLevel({ ...changeParams, levelUrl:nextLevelUrl });
 }
