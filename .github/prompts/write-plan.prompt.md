@@ -27,9 +27,10 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 ## Plan requirements
 
 - Write a self-contained handoff for the same model in a fresh conversation. The implementing agent will not have this chat history or session memory.
+- Avoid including historical decisions when they would only be meaningful to the user and not the fresh-context, implementing agent.
 - Include an explicit instruction in every generated plan: "Keep this plan limited to agreed requirements and implementation approach. Put progress, discoveries, and verification outcomes in chat, not in the plan. Change the plan only for agreed scope/approach changes." Do not append implementation status, completion checklists, findings, or validation reports to the plan.
 - Divide implementation into independently testable phases.
-- Limit each phase to at most 100 changed production-source lines, additions plus deletions. Generated files, tests, fixtures, documentation, and the plan do not count.
+- Limit each phase to at most 100 changed production-source lines. State the counting rules in every generated plan and apply them to both the 100-line planning limit and the 120-line implementation limit. Count additions and partial-file deletions. Whole-file deletions, file movements to new folders, and pure renames do not count, but edits to renamed files do. Do not treat a rewrite as a whole-file deletion. Generated files, tests, fixtures, documentation, and the plan do not count.
 - Require the implementing agent to stop after every phase for human review and explicit approval before proceeding.
 - Require the implementing agent to stop before exceeding a 120 production-line limit and ask the user how to proceed. The difference between the 100-line limit for your planning and the higher 120-line limit for the implementing agent is to avoid the need for extra conversation when the implementing agent is slightly over the predicted line count.
 - Do not instruct the implementing agent to prepare or propose a phase split when a phase would exceed its budget. Asking how to proceed is sufficient; wait for user direction before doing replanning work. Do not add a separate stop-and-ask requirement at the 100-line planning budget.
