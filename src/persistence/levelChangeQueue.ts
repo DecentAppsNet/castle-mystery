@@ -1,15 +1,13 @@
-/* This file reads, writes, and clears persistent level progress records.
+/* This file manages the persistent queue of pending level changes.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from "decent-portal";
 
 import { deleteByKey, getAllKeysAtPath, getText, setText } from "./pathStore";
-import { fillTemplate } from "./pathUtil";
 import LevelChange from "./types/LevelChange";
 import LevelChanges, { isValidLevelChanges } from "./types/LevelChanges";
 
-const keyPath = '/levelChanges/'
-const keyTemplate = '/levelChanges/${levelFilename}.json';
+const keyPath = '/levelChanges/';
 
 const theState = {
   isInitialized:false,
@@ -43,9 +41,12 @@ async function _getLevelChanges(key:string):Promise<LevelChanges|null> {
   return obj;
 }
 
-async function _pushLevelChanges(levelFilename:string, levelChanges:LevelChange|LevelChange[]) {
+function _getLevelChangeKey(levelFilename:string):string {
+  return `${keyPath}${levelFilename}.json`;
+}
+
+async function _pushLevelChanges(key:string, levelChanges:LevelChange|LevelChange[]) {
   if (!Array.isArray(levelChanges)) levelChanges = [levelChanges];
-  const key = fillTemplate(keyTemplate, { levelFilename });
   const draft:LevelChanges = await _getLevelChanges(key) ?? { changes:[] };
   draft.changes = [...draft.changes, ...levelChanges];
   await _setLevelChanges(key, draft);
@@ -54,7 +55,10 @@ async function _pushLevelChanges(levelFilename:string, levelChanges:LevelChange|
 
 async function _popLevelChanges(key:string):Promise<LevelChange[]> {
   const levelChanges = await _getLevelChanges(key);
-  if (levelChanges === null) return [];
+  if (levelChanges === null) {
+    theState.levelsWithPendingChanges.delete(key);
+    return [];
+  }
   await _removeKey(key);
   return levelChanges.changes;
 }
@@ -68,13 +72,14 @@ function _runInOrder<Result>(operation:() => Promise<Result>):Promise<Result> {
 // Push one or more level changes to persistent queue.
 export async function pushLevelChanges(levelFilename:string, levelChanges:LevelChange|LevelChange[]) {
   assert(theState.isInitialized);
-  return _runInOrder(() => _pushLevelChanges(levelFilename, levelChanges));
+  const key = _getLevelChangeKey(levelFilename);
+  return _runInOrder(() => _pushLevelChanges(key, levelChanges));
 }
 
 // Pop all pending changings for a level.
 export async function popLevelChanges(levelFilename:string):Promise<LevelChange[]> {
   assert(theState.isInitialized);
-  const key = fillTemplate(keyTemplate, { levelFilename });
+  const key = _getLevelChangeKey(levelFilename);
   if (!theState.levelsWithPendingChanges.has(key)) return []; // Cheap exit suitable for 60 FPS calls.
   return _runInOrder(() => _popLevelChanges(key));
 }
@@ -83,6 +88,6 @@ export async function popLevelChanges(levelFilename:string):Promise<LevelChange[
 export async function initLevelChanges() {
   if (theState.isInitialized) return;
   const keys = await getAllKeysAtPath(keyPath);
-  keys.forEach(theState.levelsWithPendingChanges.add);
+  keys.forEach(key => theState.levelsWithPendingChanges.add(key));
   theState.isInitialized = true;
 }

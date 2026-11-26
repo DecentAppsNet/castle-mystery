@@ -9,7 +9,7 @@ import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { updatePieceStackForConclusionPages } from './pieces';
 import { parseSections, parseUniqueNameValueLines } from '@/common/markdownUtil';
-import { baseUrl } from '@/common/urlUtil';
+import { baseUrl, urlToFilename } from '@/common/urlUtil';
 import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
 import { createClozePartLayoutTweaksForConclusion } from "./drawing/clozePartLayoutTweaks";
 
@@ -79,11 +79,24 @@ export function loadBookFromText(text:string):BookState {
   return bookState;
 }
 
+function _validateUniqueLevelFilenames(levelUrls:readonly string[]):void {
+  const urlByFilename = new Map<string, string>();
+  for (const levelUrl of levelUrls) {
+    const filename = urlToFilename(levelUrl);
+    const otherUrl = urlByFilename.get(filename);
+    if (otherUrl !== undefined && otherUrl !== levelUrl) {
+      throw new Error(`Level URLs '${otherUrl}' and '${levelUrl}' share the filename '${filename}'.`);
+    }
+    urlByFilename.set(filename, levelUrl);
+  }
+}
+
 export async function loadBookFromUrl(bookFileUrl:string):Promise<BookState> {
   const response = await fetch(baseUrl(bookFileUrl));
   if (!response.ok) throw new Error(`Unable to load book '${bookFileUrl}': HTTP ${response.status}.`);
   const bookState = loadBookFromText(await response.text());
   const directory = bookFileUrl.slice(0, bookFileUrl.lastIndexOf('/') + 1);
   bookState.levelUrls = bookState.levelUrls.map(levelUrl => levelUrl.startsWith('/') ? levelUrl : directory + levelUrl);
+  _validateUniqueLevelFilenames(bookState.levelUrls);
   return bookState;
 }

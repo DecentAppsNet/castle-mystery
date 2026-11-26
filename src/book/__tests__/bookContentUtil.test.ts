@@ -70,4 +70,23 @@ describe('bookContentUtil', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status:404 })));
     await expect(loadBookFromUrl('/levels/book.md')).rejects.toThrow('HTTP 404');
   });
+
+  it('rejects distinct level URLs with the same persistence filename', async () => {
+    vi.stubGlobal('window', { location:{ pathname:'/' } });
+    const text = bookText.replace('02_house_of_rocks.md', 'tower/01_birth_of_constantine.md');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(text)));
+
+    await expect(loadBookFromUrl('/levels/book.md')).rejects.toThrow(
+      "Level URLs '/levels/01_birth_of_constantine.md' and '/levels/tower/01_birth_of_constantine.md' share the filename '01_birth_of_constantine.md'."
+    );
+  });
+
+  it('does not report a collision when entries resolve to the same URL', async () => {
+    vi.stubGlobal('window', { location:{ pathname:'/' } });
+    const text = bookText.replace('02_house_of_rocks.md', '/levels/01_birth_of_constantine.md');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(text)));
+
+    const book = await loadBookFromUrl('/levels/book.md');
+    expect(book.levelUrls.slice(0, 2)).toEqual(['/levels/01_birth_of_constantine.md', '/levels/01_birth_of_constantine.md']);
+  });
 });
