@@ -3,6 +3,7 @@
 
 import Conclusion, { duplicateConclusion } from "../conclusions/types/Conclusion";
 import GameState from "../types/GameState";
+import { revealAllCharacterTitles } from "../worldProgressUtil";
 import ChangeConclusionsEvent from "./types/ChangeConclusionsEvent";
 import { applyCompletedConclusionRoomReveals, syncLevelCompleteState } from "./conclusionStateUtil";
 
@@ -33,7 +34,7 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
   applyCompletedConclusionRoomReveals(gameState);
   const identitiesConclusion = gameState.conclusions.find(conclusion => conclusion.id === "identities") || null;
   if (identitiesConclusion?.isComplete) {
-    gameState.baseCharacters.forEach(character => gameState.discoveryState.titleKnownCharacterIds.add(character.id));
+    revealAllCharacterTitles(gameState);
   }
   syncLevelCompleteState(gameState);
 }

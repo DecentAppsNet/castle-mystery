@@ -10,6 +10,7 @@ import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
 import initialAppearanceText from '@/levelLoading/__tests__/fixtures/initial-appearance.md?raw';
 import { replaceHeadImage } from '../characterBody';
+import { completeLevel, revealAllCharacterTitles, revealRooms } from '../worldProgressUtil';
 
 function _loadLevel() {
   return loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md');
@@ -142,6 +143,40 @@ describe('discovery state', () => {
     expect(notifiedMinutes).toEqual([0, 1]);
   });
 
+  it('reveals an obscured room repeatedly without discovering it', () => {
+    const gameState = _createGameState();
+
+    revealRooms(gameState, ['study']);
+    revealRooms(gameState, ['study']);
+
+    expect(gameState.discoveryState.obscuredRoomIds).not.toContain('study');
+    expect(gameState.discoveryState.discoveredRoomIds).not.toContain('study');
+    expect(gameState.isLevelComplete).toBe(false);
+  });
+
+  it('reveals all character titles without discovering skins or completing the level', () => {
+    const gameState = _createGameState();
+
+    revealAllCharacterTitles(gameState);
+
+    expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
+    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set());
+    expect(gameState.isLevelComplete).toBe(false);
+  });
+
+  it('discovers rooms, interactive skins and items when completing the level', () => {
+    const gameState = _createGameState();
+
+    completeLevel(gameState);
+
+    expect(gameState.isLevelComplete).toBe(true);
+    expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
+    expect(gameState.discoveryState.obscuredRoomIds).toEqual(new Set());
+    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['sam-default', 'pat-default']));
+    expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
+    expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam']));
+  });
+
   it('applies conclusion room reveals, identity title reveals, and level-complete discovery only to discovery state', () => {
     const gameState = _createGameState();
     const discoveryConclusion = gameState.conclusions.find(conclusion => conclusion.id === 'discovery')!;
@@ -156,6 +191,7 @@ describe('discovery state', () => {
     });
 
     expect(gameState.discoveryState.obscuredRoomIds).not.toContain('study');
+    expect(gameState.discoveryState.discoveredRoomIds).not.toContain('study');
     expect(gameState.baseRooms.find(room => room.id === 'study')).not.toHaveProperty('isObscured');
     expect(gameState.isLevelComplete).toBe(false);
 
