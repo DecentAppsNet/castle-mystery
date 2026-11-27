@@ -22,6 +22,7 @@ import { findMetaTimeNow } from '@/game/metaTimeUtil';
 import { DRAW_FPS_COUNTER } from '@/developer/config';
 import { updateAndDrawFps } from '@/developer/fpsUtil';
 import AddPageNoteDialog from './dialogs/AddPageNoteDialog';
+import { createPageNoteActions } from './dialogs/pageNoteActions';
 
 type NoteAction = { book:BookState; piece:Piece; isNew:boolean };
 type NotePress = NoteAction & { clientX:number; clientY:number };
@@ -35,7 +36,7 @@ type Props = {
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   bookState:BookState|null,
   onStorageError:(error:unknown) => void,
-  onBookClaimSettled:() => void,
+  onBookImmediateSave:() => void,
   onBookInteractionCommitted:() => void,
   loadedLevelUrl:string|null,
   isGameDisabled:() => boolean,
@@ -71,7 +72,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettled, onBookInteractionCommitted, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
+function LevelView({ref, gameState, bookState, onStorageError, onBookImmediateSave, onBookInteractionCommitted, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
     onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -229,7 +230,7 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettle
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
     if (bookState && (!frame.canRenderScene || !bookState.isVisible || _isInputDisabled())) onBookMouseLeave(bookState);
     if (frame.canRenderScene && currentGameState && bookState?.isVisible) {
-      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, onStorageError, loadedLevelUrl, onBookClaimSettled);
+      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, onStorageError, loadedLevelUrl, onBookImmediateSave);
     }
     _cancelInvalidBookDrag();
     if (frame.canRenderScene && currentGameState && DRAW_FPS_COUNTER) {
@@ -341,18 +342,8 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettle
     />
     {noteAction && <AddPageNoteDialog isOpen={true}
       existingText={noteAction.isNew ? undefined : noteAction.piece.text}
-      onCancel={() => setNoteAction(null)}
-      onDelete={noteAction.isNew ? undefined : () => {
-        const { book, piece } = noteAction;
-        book.pieceStack = book.pieceStack.filter(candidate => candidate !== piece);
-        setNoteAction(null);
-      }}
-      onSubmit={text => {
-        const { book, piece, isNew } = noteAction;
-        piece.text = text;
-        if (isNew) book.pieceStack = [...book.pieceStack, piece];
-        setNoteAction(null);
-      }} />}
+      {...createPageNoteActions(noteAction.book, noteAction.piece, noteAction.isNew,
+        () => setNoteAction(null), onBookImmediateSave)} />}
   </div>;
 }
 

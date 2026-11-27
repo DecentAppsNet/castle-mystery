@@ -255,7 +255,7 @@ function HomeScreen() {
           gameState={gameState} 
           bookState={bookState}
           onStorageError={_reportBookStorageError}
-          onBookClaimSettled={() => bookSaveCoordinatorRef.current?.requestImmediateSave()}
+          onBookImmediateSave={() => bookSaveCoordinatorRef.current?.requestImmediateSave()}
           onBookInteractionCommitted={() => bookSaveCoordinatorRef.current?.requestDebouncedSave()}
           loadedLevelUrl={loadedLevel?.levelUrl ?? null}
           isGameDisabled={_isGameDisabled}
