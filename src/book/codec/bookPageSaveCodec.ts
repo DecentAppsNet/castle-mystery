@@ -3,10 +3,10 @@
 
 import Conclusion from '@/conclusions/types/Conclusion';
 import SavedBookPage from '@/persistence/types/SavedBookPage';
-import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
+import { generateAnswerSetIdToPieceStyleNoMap } from '../answerSetPieceStyleUtil';
 import { decodeBookConclusion, encodeBookConclusion } from './conclusionSaveCodec';
-import { createClozePartLayoutTweaksForConclusion } from './drawing/clozePartLayoutTweaks';
-import BookPage from './types/BookPage';
+import { createClozePartLayoutTweaksForConclusion } from '../drawing/clozePartLayoutTweaks';
+import BookPage from '../types/BookPage';
 
 function _encodePage(page:BookPage):SavedBookPage {
   const { kind, chapterNo, headingText } = page;

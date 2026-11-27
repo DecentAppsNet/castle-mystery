@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import ChapterEndPage from '@/book/types/ChapterEndPage';
+import ConclusionPage from '@/book/types/ConclusionPage';
+import TallyPage from '@/book/types/TallyPage';
 import { decodeBookPages, encodeBookPages } from '../bookPageSaveCodec';
-import ChapterEndPage from '../types/ChapterEndPage';
-import ConclusionPage from '../types/ConclusionPage';
-import TallyPage from '../types/TallyPage';
 import { savedBookPages } from './fixtures/savedBookPages';
 
 function _decodeFixture() {

@@ -7,9 +7,9 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from '@/conclusions/types/ClozeBlank';
 import BookSaveState from '@/persistence/types/BookSaveState';
 import SavedBookPiece from '@/persistence/types/SavedBookPiece';
 import { decodeBookPages, encodeBookPages } from './bookPageSaveCodec';
-import BookPage from './types/BookPage';
-import BookState, { createDefaultBookState } from './types/BookState';
-import Piece from './types/Piece';
+import BookPage from '../types/BookPage';
+import BookState, { createDefaultBookState } from '../types/BookState';
+import Piece from '../types/Piece';
 
 function _encodePiece(piece:Piece, pages:readonly BookPage[]):SavedBookPiece {
   const { kind, pageI, styleNo, text, xPercent, yPercent } = piece;

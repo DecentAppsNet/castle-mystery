@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { decodeBookSaveState, encodeBookSaveState } from '../bookSaveCodec';
-import { createDefaultBookState } from '../types/BookState';
-import ConclusionPage from '../types/ConclusionPage';
-import Piece from '../types/Piece';
+import { createDefaultBookState } from '@/book/types/BookState';
+import ConclusionPage from '@/book/types/ConclusionPage';
+import Piece from '@/book/types/Piece';
+import { decodeBookSaveState, encodeBookSaveState } from '..';
 import { bookSnapshot } from './fixtures/bookSnapshot';
 
 type AnswerPiece = Extract<Piece, { kind:'answer' }>;
