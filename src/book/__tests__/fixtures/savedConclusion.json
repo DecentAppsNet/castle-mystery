@@ -1,0 +1,22 @@
+{
+  "id": "identity",
+  "title": "Identity",
+  "parts": [
+    { "type": "text", "text": "The visitors were " },
+    { "type": "blank", "answerSetI": 0, "correctAnswerIndexes": [0, 1], "playerAnswerIndex": 0 },
+    { "type": "blank", "answerSetI": 0, "correctAnswerIndexes": [0, 1], "playerAnswerIndex": -1 },
+    { "type": "separator" },
+    { "type": "image", "imageUrl": "/assets/conclusions/key.png" },
+    { "type": "blank", "answerSetI": 1, "correctAnswerIndexes": [1], "playerAnswerIndex": 1 }
+  ],
+  "answerSets": [
+    { "sourceCategoryId": "characters", "answers": ["Duchess", "Guard"] },
+    { "sourceCategoryId": "rooms", "answers": ["Study", "Hall"] }
+  ],
+  "isComplete": false,
+  "isLocked": true,
+  "isOptional": true,
+  "incorrectGuessCount": 3,
+  "unlockConclusionIds": ["motive"],
+  "revealRoomIds": ["hall"]
+}
