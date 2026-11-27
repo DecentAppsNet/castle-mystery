@@ -147,8 +147,8 @@ function HomeScreen() {
     initPromiseRef.current.then((initResults) => {
       if (isCancelled || !loadRequestRef.current.isMounted) return;
       setMinutes(initResults.minutes);
-      setBookState(initResults.bookState);
       _publishPreparedLevelState(initResults, initResults.bookState);
+      setBookState(initResults.bookState);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
     }).catch((error:unknown) => {
