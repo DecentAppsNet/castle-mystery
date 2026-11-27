@@ -21,7 +21,7 @@ import { clearPlayerEvents } from '@/game/playerEventUtil';
 import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
-import { addLevelChapterToBook, findBookImageUrls } from '@/book';
+import { BookSaveCoordinator, findBookImageUrls } from '@/book';
 import { createImageSet, ImageSet } from '@/imageLoading';
 import InitResults from './types/InitResults';
 import { acceptPreparedLevelState } from './levelPreparation';
@@ -39,6 +39,7 @@ function HomeScreen() {
   const loadRequestRef = useRef<LevelLoadRequest>({ pending:null, isMounted:true });
   const imageSetRef = useRef<ImageSet|null>(null);
   const initPromiseRef = useRef<Promise<InitResults>|null>(null);
+  const bookSaveCoordinatorRef = useRef<BookSaveCoordinator|null>(null);
   const saveCoordinatorRef = useRef<LevelSaveCoordinator|null>(null);
   const saveGameStateRef = useRef<GameState|null>(null);
   const isGameDisabledRef = useRef(true);
@@ -61,6 +62,7 @@ function HomeScreen() {
     request.isMounted = true;
     return () => {
       request.isMounted = false;
+      void bookSaveCoordinatorRef.current?.stopAndSettle();
       void saveCoordinatorRef.current?.stopAndSettle();
     };
   }, []);
@@ -71,9 +73,13 @@ function HomeScreen() {
     if (loadRequestRef.current.isMounted) setStorageErrorMessage(message);
   }
 
-  function _publishPreparedLevelState(prepared:PreparedLevelState, sessionBookState:BookState|null = bookState) {
+  async function _publishPreparedLevelState(prepared:PreparedLevelState, sessionBookState:BookState|null = bookState,
+    saveFreshBook:boolean = false) {
     assertNonNullable(sessionBookState);
-    addLevelChapterToBook(sessionBookState, prepared.level, prepared.levelUrl, _reportBookStorageError);
+    const bookWriter = bookSaveCoordinatorRef.current;
+    assertNonNullable(bookWriter);
+    await bookWriter.acceptLevelChapter(prepared.level, prepared.levelUrl, _reportBookStorageError, saveFreshBook);
+    if (!loadRequestRef.current.isMounted) return;
     acceptPreparedLevelState(prepared, findBookImageUrls(sessionBookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave,
@@ -144,10 +150,14 @@ function HomeScreen() {
         throw error;
       });
     }
-    initPromiseRef.current.then((initResults) => {
+    initPromiseRef.current.then(async (initResults) => {
       if (isCancelled || !loadRequestRef.current.isMounted) return;
       setMinutes(initResults.minutes);
-      _publishPreparedLevelState(initResults, initResults.bookState);
+      bookSaveCoordinatorRef.current = new BookSaveCoordinator(initResults.bookUrl, initResults.bookState,
+        initResults.bookLoadKind === 'unsupportedVersion',
+        message => { if (loadRequestRef.current.isMounted) setStorageErrorMessage(message); });
+      await _publishPreparedLevelState(initResults, initResults.bookState, initResults.bookLoadKind === 'fresh');
+      if (isCancelled || !loadRequestRef.current.isMounted) return;
       setBookState(initResults.bookState);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);

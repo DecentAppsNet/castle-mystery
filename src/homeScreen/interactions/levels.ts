@@ -22,14 +22,14 @@ type ChangeLevelParams = {
   closeCurtain:() => Promise<boolean>,
   onLoadingFailed:(error:unknown) => void,
   levelUrl:string,
-  onLevelPrepared:(prepared:PreparedLevelState) => void,
+  onLevelPrepared:(prepared:PreparedLevelState) => void|Promise<void>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
   setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setActiveCharacterId:Dispatch<SetStateAction<string>>
 };
 
-async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:(prepared:PreparedLevelState) => void,
+async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:ChangeLevelParams['onLevelPrepared'],
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setDiscoveries:Dispatch<SetStateAction<Discoveries>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
   loadRequest:LevelLoadRequest, imageSet:ImageSet):Promise<void> {
@@ -45,7 +45,8 @@ async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:(prepared:Pre
   if (!loadRequest.isMounted) return;
 
   const { gameState } = prepared;
-  onLevelPrepared(prepared);
+  await onLevelPrepared(prepared);
+  if (!loadRequest.isMounted) return;
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
   setDiscoveries(createDiscoveries(gameState));

@@ -40,14 +40,14 @@ describe('bookContentUtil', () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it('publishes world completion once per chapter with no required conclusions', () => {
+  it('publishes world completion once per chapter with no required conclusions', async () => {
     const book = loadBookFromText(bookText);
     const level = loadValidLevelForTest(levelText);
     const optionalOnly = { ...level, conclusions:level.conclusions.map(conclusion => ({ ...conclusion, isOptional:true })) };
     enqueue.mockResolvedValue(undefined);
-    addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
-    addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
-    addLevelChapterToBook(book, { ...level, conclusions:[] }, '/levels/empty.md', reportStorageError);
+    await addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
+    await addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
+    await addLevelChapterToBook(book, { ...level, conclusions:[] }, '/levels/empty.md', reportStorageError);
 
     expect(enqueue.mock.calls).toEqual([
       ['optional.md', [{ kind:'setLevelComplete' }]], ['empty.md', [{ kind:'setLevelComplete' }]]

@@ -1,7 +1,9 @@
 /* This file coordinates snapshot capture and persistent writes for one book session.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import Level from '@/levelLoading/types/Level';
 import { setBookSaveState } from '@/persistence/bookSaveState';
+import { addLevelChapterToBook } from './bookContentUtil';
 import { encodeBookSaveState } from './codec';
 import BookState from './types/BookState';
 
@@ -22,7 +24,7 @@ class BookSaveCoordinator {
   private _isStopped = false;
   private _pending:Promise<void> = Promise.resolve();
 
-  constructor(private readonly _bookUrl:string, private readonly _book:Readonly<BookState>,
+  constructor(private readonly _bookUrl:string, private readonly _book:BookState,
     private readonly _protectUnsupportedVersion:boolean, private readonly _onStorageError:(message:string) => void) {}
 
   private _cancelTimer():void {
@@ -60,6 +62,13 @@ class BookSaveCoordinator {
     if (this._isStopped || this._protectUnsupportedVersion) return;
     this._hasImmediateRequest = true;
     this._capture();
+  }
+
+  async acceptLevelChapter(level:Level, levelUrl:string, reportQueueError:(error:unknown) => void,
+    saveFreshBook:boolean = false):Promise<void> {
+    if (this._isStopped) return;
+    const addition = addLevelChapterToBook(this._book, level, levelUrl, reportQueueError);
+    if (addition === false ? saveFreshBook : await addition) this.requestImmediateSave();
   }
 
   stopAndSettle():Promise<void> {

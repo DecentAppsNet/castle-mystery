@@ -14,6 +14,8 @@ import { baseUrl, urlToFilename } from '@/common/urlUtil';
 import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
 import { createClozePartLayoutTweaksForConclusion } from "./drawing/clozePartLayoutTweaks";
 
+const pendingChapterAdds = new WeakMap<BookState, Map<string, Promise<boolean>>>();
+
 function _findNextChapterNo(bookState:BookState):number {
   if (!bookState.pages.length) return 1;
   return bookState.pages[bookState.pages.length-1].chapterNo + 1;
@@ -47,8 +49,7 @@ function _addBookStartPages(title:string, subtitle:string|null, author:string, p
   pages.push({ kind:'bookStart', headingText:'', title, subtitle, author, chapterNo:0 });
 }
 
-export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl:string, reportStorageError:(error:unknown) => void) {
-  if (bookState.pages.some(page => page.kind === 'chapterStart' && page.levelUrl === levelUrl)) return;
+function _appendChapter(bookState:BookState, level:Level, levelUrl:string):true {
   const chapterNo = _findNextChapterNo(bookState);
   const { pages } = bookState;
   const newPagesStartIndex = pages.length;
@@ -57,9 +58,24 @@ export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl
   _addChapterEndPages(level, levelUrl, chapterNo, pages);
   updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
   bookState.pageNo = newPagesStartIndex + 1;
-  if (level.conclusions.every(conclusion => conclusion.isOptional)) {
-    void pushLevelChanges(urlToFilename(levelUrl), [{ kind:'setLevelComplete' }]).catch(reportStorageError);
-  }
+  return true;
+}
+
+export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl:string,
+  reportStorageError:(error:unknown) => void):boolean|Promise<boolean> {
+  if (bookState.pages.some(page => page.kind === 'chapterStart' && page.levelUrl === levelUrl)) return false;
+  let pending = pendingChapterAdds.get(bookState);
+  const existing = pending?.get(levelUrl);
+  if (existing) return existing.then(() => false);
+  if (level.conclusions.some(conclusion => !conclusion.isOptional)) return _appendChapter(bookState, level, levelUrl);
+  if (!pending) pendingChapterAdds.set(bookState, pending = new Map());
+  const addition = pushLevelChanges(urlToFilename(levelUrl), [{ kind:'setLevelComplete' }]).then(
+    () => _appendChapter(bookState, level, levelUrl), error => {
+      reportStorageError(error);
+      return false;
+    }).finally(() => { pending.delete(levelUrl); });
+  pending.set(levelUrl, addition);
+  return addition;
 }
 
 function _parseLevelUrls(levelsSection:string):string[] {

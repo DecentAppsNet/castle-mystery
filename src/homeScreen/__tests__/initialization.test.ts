@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addLevelChapterToBook, findBookImageUrls } from '@/book';
+import { BookSaveCoordinator, findBookImageUrls } from '@/book';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { ImageSet } from '@/imageLoading';
 import levelText from '@/levelLoading/__tests__/fixtures/default-level.md?raw';
@@ -7,6 +7,7 @@ import snapshotText from '@/persistence/__tests__/fixtures/bookSaveState.json?ra
 import { pathStoreMock } from '@/persistence/__tests__/pathStoreMock';
 import { getBookSaveState, setBookSaveState } from '@/persistence/bookSaveState';
 import { setLastLevelUrl } from '@/persistence/lastLevel';
+import { pushLevelChanges } from '@/persistence/levelChangeQueue';
 import BookSaveState from '@/persistence/types/BookSaveState';
 import { init } from '../interactions/initialization';
 import { acceptPreparedLevelState } from '../levelPreparation';
@@ -16,6 +17,9 @@ vi.mock('@/persistence/pathStore', async () => {
   const { pathStoreMock } = await import('@/persistence/__tests__/pathStoreMock');
   return pathStoreMock;
 });
+vi.mock('@/persistence/levelChangeQueue', () => ({ pushLevelChanges:vi.fn() }));
+
+const enqueue = vi.mocked(pushLevelChanges);
 
 const bookUrl = '/levels/book.md';
 const firstLevelUrl = '/levels/first.md';
@@ -35,6 +39,7 @@ function _mockFetch(url:string):Response {
 describe('startup book restoration', () => {
   beforeEach(() => {
     pathStoreMock.reset();
+    enqueue.mockReset().mockResolvedValue(undefined);
     stubOffscreenCanvas();
     vi.stubGlobal('window', { location:{ pathname:`${appPath}/` } });
     vi.stubGlobal('fetch', vi.fn(async (url:string) => _mockFetch(url)));
@@ -65,19 +70,71 @@ describe('startup book restoration', () => {
 
   it('keeps the saved page when startup revisits an existing chapter', async () => {
     await setBookSaveState(bookUrl, save);
+    pathStoreMock.setText.mockClear();
     const prepared = await init(new ImageSet());
     const reportStorageError = vi.fn();
-    addLevelChapterToBook(prepared.bookState, prepared.level, prepared.levelUrl, reportStorageError);
+    const writer = new BookSaveCoordinator(bookUrl, prepared.bookState, false, reportStorageError);
+    await writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportStorageError);
+    await writer.stopAndSettle();
     expect(prepared.levelUrl).toBe(firstLevelUrl);
     expect(prepared.bookState.pageNo).toBe(save.pageNo);
     expect(prepared.bookState.pages).toHaveLength(save.pages.length);
     expect(reportStorageError).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
   });
 
   it('loads a fresh authored book when there is no snapshot', async () => {
     const result = await init(new ImageSet());
     expect(result).toMatchObject({ bookUrl, bookLoadKind:'fresh', levelUrl:firstLevelUrl });
     expect(result.bookState.levelUrls).toEqual([firstLevelUrl, secondLevelUrl]);
+  });
+
+  it('saves fresh content once after its initial empty chapter enqueues completion', async () => {
+    const prepared = await init(new ImageSet());
+    const completion = Promise.withResolvers<void>();
+    const reportStorageError = vi.fn();
+    enqueue.mockReturnValueOnce(completion.promise);
+    const writer = new BookSaveCoordinator(prepared.bookUrl, prepared.bookState, false, reportStorageError);
+    const acceptance = writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportStorageError, true);
+    const duplicate = writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportStorageError);
+    expect(enqueue).toHaveBeenCalledExactlyOnceWith('first.md', [{ kind:'setLevelComplete' }]);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+
+    completion.resolve();
+    await Promise.all([acceptance, duplicate]);
+    await writer.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    await expect(getBookSaveState(bookUrl)).resolves.toMatchObject({ kind:'found',
+      saveState:{ levelUrls:[firstLevelUrl, secondLevelUrl], pageNo:3 } });
+    expect(prepared.bookState.pages.filter(page => page.kind === 'chapterStart')).toHaveLength(1);
+  });
+
+  it('reports completion enqueue rejection without committing or saving an empty chapter', async () => {
+    const prepared = await init(new ImageSet());
+    const reportQueueError = vi.fn();
+    const error = new Error('Queue unavailable');
+    enqueue.mockRejectedValueOnce(error);
+    const writer = new BookSaveCoordinator(prepared.bookUrl, prepared.bookState, false, vi.fn());
+    await writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportQueueError, true);
+    await writer.stopAndSettle();
+    expect(reportQueueError).toHaveBeenCalledExactlyOnceWith(error);
+    expect(prepared.bookState.pages).toHaveLength(2);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+  });
+
+  it('saves each newly accepted chapter once and does not save revisits', async () => {
+    const prepared = await init(new ImageSet());
+    const reportStorageError = vi.fn();
+    const writer = new BookSaveCoordinator(prepared.bookUrl, prepared.bookState, false, reportStorageError);
+    await writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportStorageError, true);
+    await writer.acceptLevelChapter(prepared.level, secondLevelUrl, reportStorageError);
+    await writer.acceptLevelChapter(prepared.level, prepared.levelUrl, reportStorageError);
+    await writer.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledTimes(2);
+    expect(enqueue).toHaveBeenCalledTimes(2);
+    expect(prepared.bookState.pages.filter(page => page.kind === 'chapterStart').map(page => page.levelUrl))
+      .toEqual([firstLevelUrl, secondLevelUrl]);
   });
 
   it('falls back to authored pages when the snapshot has an invalid page reference', async () => {
@@ -92,6 +149,9 @@ describe('startup book restoration', () => {
     pathStoreMock.getText.mockResolvedValueOnce(JSON.stringify({ version:2 }));
     const result = await init(new ImageSet());
     expect(result).toMatchObject({ bookUrl, bookLoadKind:'unsupportedVersion', levelUrl:firstLevelUrl });
+    const writer = new BookSaveCoordinator(result.bookUrl, result.bookState, result.bookLoadKind === 'unsupportedVersion', vi.fn());
+    await writer.acceptLevelChapter(result.level, result.levelUrl, vi.fn());
+    await writer.stopAndSettle();
     expect(pathStoreMock.setText).not.toHaveBeenCalled();
     expect(pathStoreMock.deleteByKey).not.toHaveBeenCalled();
   });
