@@ -117,7 +117,8 @@ export function claimBookConclusion(bookState:BookState, pageNo:number, metaTime
   updateBookClaimControls(bookState);
 }
 
-export function updateBookClaim(bookState:BookState, metaTime:number, reportStorageError:(error:unknown) => void):void {
+export function updateBookClaim(bookState:BookState, metaTime:number, reportStorageError:(error:unknown) => void,
+  onClaimSettled?:() => void):void {
   // Discard obsolete ownership without rolling back results already applied.
   const claim = bookState.claimState;
   if (claim === null) return;
@@ -133,7 +134,7 @@ export function updateBookClaim(bookState:BookState, metaTime:number, reportStor
     assert(bookState.animationKind === null);
     if (!bookState.layout || bookState.layout.pieceLayoutsPageNo !== bookState.pageNo) return;
     const elapsed = metaTime - claim.startedAt;
-    applyBookClaimResults(bookState, claim, elapsed, reportStorageError);
+    applyBookClaimResults(bookState, claim, elapsed, reportStorageError, onClaimSettled);
     const timing = calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct);
     if (timing.isDone && claim.publication !== 'pending') bookState.claimState = null;
   }

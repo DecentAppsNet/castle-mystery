@@ -46,17 +46,21 @@ function _completeClaim(bookState:BookState, claim:BookClaimState):void {
   claim.resultApplied = true;
 }
 
-export function applyBookClaimResults(bookState:BookState, claim:BookClaimState, elapsed:number, reportStorageError:(error:unknown) => void):void {
+export function applyBookClaimResults(bookState:BookState, claim:BookClaimState, elapsed:number,
+  reportStorageError:(error:unknown) => void, onClaimSettled?:() => void):void {
   // Apply the counter at failure entry or completion at success exit, never on presentation sampling.
   const timing = calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct);
   if (!claim.resultApplied && !claim.publication && timing.shouldComplete) {
     const changes = _getWorldChanges(bookState, claim);
-    if (!changes.length) _completeClaim(bookState, claim);
-    else {
+    if (!changes.length) {
+      _completeClaim(bookState, claim);
+      onClaimSettled?.();
+    } else {
       claim.publication = 'pending';
       void pushLevelChanges(urlToFilename(claim.page.levelUrl), changes).then(() => {
         _completeClaim(bookState, claim);
         delete claim.publication;
+        onClaimSettled?.();
       }, error => {
         claim.publication = 'failed';
         reportStorageError(error);
@@ -69,10 +73,12 @@ export function applyBookClaimResults(bookState:BookState, claim:BookClaimState,
   }
 
   // Re-resolve logical ownership against current geometry; never retain acceptance rectangles.
+  const previousEjectedCount = claim.ejectedCount;
   while (claim.ejectedCount < timing.dueEjectionCount) {
     const slot = bookState.layout?.pieceSlotLayouts.find(slot => slot.page === claim.page && slot.blank === claim.blanks[claim.ejectedCount]);
     assertNonNullable(slot);
     _ejectPiece(bookState, slot);
     claim.ejectedCount++;
   }
+  if (claim.ejectedCount > previousEjectedCount && claim.ejectedCount === claim.blanks.length) onClaimSettled?.();
 }

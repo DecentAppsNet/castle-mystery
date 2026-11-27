@@ -245,7 +245,7 @@ function _drawPieces(bookState:BookState, bookRect:Rect, metaTime:number, contex
 }
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D,
-  reportStorageError:(error:unknown) => void, loadedLevelUrl:string|null = null) {
+  reportStorageError:(error:unknown) => void, loadedLevelUrl:string|null = null, onClaimSettled?:() => void) {
   assert(bookState.isVisible); // Prefer caller to check for readability.
   const bookImage = imageSet.findImage(BOOK_IMAGE_URL)?.image ?? null;
   assertNonNullable(bookImage);
@@ -265,7 +265,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   }
   _drawBookImage(bookImage, drawRect, bookState, metaTime, context);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
-  updateBookClaim(bookState, metaTime, reportStorageError);
+  updateBookClaim(bookState, metaTime, reportStorageError, onClaimSettled);
   _drawPieces(bookState, drawRect, metaTime, context);
   context.restore();
 

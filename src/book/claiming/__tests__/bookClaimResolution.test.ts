@@ -18,9 +18,10 @@ vi.mock('@/persistence/levelChangeQueue', () => ({ pushLevelChanges:vi.fn() }));
 
 const enqueue = vi.mocked(pushLevelChanges);
 const reportStorageError = vi.fn();
+const onClaimSettled = vi.fn<() => void>();
 
 function updateBookClaim(state:BookState, time:number) {
-  advanceClaim(state, time, reportStorageError);
+  advanceClaim(state, time, reportStorageError, onClaimSettled);
 }
 
 function applyBookClaimResults(state:BookState, claim:BookClaimState, elapsed:number) {
@@ -67,6 +68,7 @@ afterEach(() => {
   clearSeed();
   enqueue.mockReset();
   reportStorageError.mockClear();
+  onClaimSettled.mockReset();
 });
 
 describe('book claim resolution', () => {
@@ -83,6 +85,12 @@ describe('book claim resolution', () => {
       headingText:'', winSynopsis:'', conclusions:[claimPage.conclusion, optionalPage.conclusion] });
     const stored = Promise.withResolvers<void>();
     enqueue.mockReturnValue(stored.promise);
+    onClaimSettled.mockImplementation(() => {
+      expect(claimPage.conclusion.isComplete).toBe(true);
+      expect(optionalPage.conclusion.isLocked).toBe(false);
+      expect(bookState.pieceStack.map(piece => piece.text)).toEqual(['First', 'Second']);
+      expect(bookState.claimState?.publication).toBeUndefined();
+    });
 
     claimBookConclusion(bookState, 1, 123);
     updateBookClaim(bookState, 100000);
@@ -93,6 +101,7 @@ describe('book claim resolution', () => {
     expect(claimPage.conclusion.isComplete).toBe(false);
     expect(optionalPage.conclusion.isLocked).toBe(true);
     expect(bookState.claimState).not.toBeNull();
+    expect(onClaimSettled).not.toHaveBeenCalled();
 
     stored.resolve();
     await stored.promise;
@@ -101,6 +110,7 @@ describe('book claim resolution', () => {
     expect(optionalPage.conclusion).toMatchObject({ isLocked:false, isComplete:false });
     expect(bookState.claimState).toBeNull();
     expect(enqueue).toHaveBeenCalledOnce();
+    expect(onClaimSettled).toHaveBeenCalledOnce();
   });
 
   it('reports an enqueue rejection without counting a guess, and allows a new claim', async () => {
@@ -119,12 +129,14 @@ describe('book claim resolution', () => {
     expect(bookState.claimState).toBeNull();
     expect(page.conclusion).toMatchObject({ isComplete:false, incorrectGuessCount:0 });
     expect(otherBlank.playerAnswerIndex).toBe(1);
+    expect(onClaimSettled).not.toHaveBeenCalled();
 
     claimBookConclusion(bookState, 1, 100001);
     updateBookClaim(bookState, 200000);
     await Promise.resolve();
     expect(page.conclusion.isComplete).toBe(true);
     expect(enqueue).toHaveBeenCalledTimes(2);
+    expect(onClaimSettled).toHaveBeenCalledOnce();
   });
 
   it('applies an optional claim without a world write when it has no world effects', () => {
@@ -134,9 +146,31 @@ describe('book claim resolution', () => {
     bookState.pages.push({ kind:'chapterEnd', chapterNo:1, levelUrl:page.levelUrl,
       headingText:'', winSynopsis:'', conclusions:[page.conclusion] });
     claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 3123);
+    expect(onClaimSettled).not.toHaveBeenCalled();
     updateBookClaim(bookState, 100000);
+    updateBookClaim(bookState, 100001);
     expect(page.conclusion.isComplete).toBe(true);
     expect(enqueue).not.toHaveBeenCalled();
+    expect(onClaimSettled).toHaveBeenCalledOnce();
+  });
+
+  it('signals once after the final ejection, with the guess and both placements settled', () => {
+    const { bookState, page, blank, otherBlank } = _createFixture();
+    onClaimSettled.mockImplementation(() => {
+      expect(page.conclusion.incorrectGuessCount).toBe(1);
+      expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
+      expect(bookState.pieceStack.every(piece => piece.kind === 'answer' && piece.placement === null)).toBe(true);
+    });
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 3123);
+    expect(page.conclusion.incorrectGuessCount).toBe(1);
+    expect(otherBlank.playerAnswerIndex).toBe(1);
+    expect(onClaimSettled).not.toHaveBeenCalled();
+    updateBookClaim(bookState, 3623);
+    updateBookClaim(bookState, 3624);
+    updateBookClaim(bookState, 100000);
+    expect(onClaimSettled).toHaveBeenCalledOnce();
   });
 
   it('unlocks matching conclusions only in the successfully claimed chapter', () => {
