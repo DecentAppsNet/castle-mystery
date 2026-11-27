@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import defaultLevelText from './fixtures/conclusions-base.md?raw';
 import initialAppearanceText from './fixtures/initial-appearance.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
-import { UNKNOWN_CHARACTER_ICON_URL } from '@/game/discoveryIconUrlUtil';
+import { UNKNOWN_CHARACTER_ICON_URL } from '@/game/drawing/overlay';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
   const { level, errors } = loadLevelForTest(text, filename);

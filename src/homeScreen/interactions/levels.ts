@@ -3,10 +3,8 @@
 
 import type { Dispatch, SetStateAction } from "react";
 
-import { createDiscoveries } from "@/game/discoveriesUtil";
 import { prepareLevelState } from '../levelPreparation';
 import { ImageSet, updateImageSetForLevel } from '@/imageLoading';
-import Discoveries from "@/game/types/Discoveries";
 import PreparedLevelState from '../types/PreparedLevelState';
 import { loadLevelFromUrl } from "@/levelLoading";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
@@ -25,13 +23,12 @@ type ChangeLevelParams = {
   onLevelPrepared:(prepared:PreparedLevelState) => void|Promise<void>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
-  setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setActiveCharacterId:Dispatch<SetStateAction<string>>
 };
 
 async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:ChangeLevelParams['onLevelPrepared'],
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
-  setDiscoveries:Dispatch<SetStateAction<Discoveries>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
+  setActiveCharacterId:Dispatch<SetStateAction<string>>,
   loadRequest:LevelLoadRequest, imageSet:ImageSet):Promise<void> {
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
@@ -49,7 +46,6 @@ async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:ChangeLevelPa
   if (!loadRequest.isMounted) return;
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
-  setDiscoveries(createDiscoveries(gameState));
   setActiveCharacterId(gameState.activeCharacterId);
 
   await setLastLevelUrl(levelUrl);
@@ -96,11 +92,10 @@ function _changeLevel({
   onLevelPrepared,
   setIsPlaying,
   setMinutes,
-  setDiscoveries,
   setActiveCharacterId
 }:ChangeLevelParams, resetSave:boolean):Promise<void> {
   return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, onLevelPrepared, setIsPlaying, setMinutes,
-    setDiscoveries, setActiveCharacterId, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
+    setActiveCharacterId, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
 }
 
 /** Handles level selection, flushing outgoing paused time before loading the target. */

@@ -9,7 +9,7 @@ import { ImageSet } from "@/imageLoading";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import { findControlRect, updateControlRect } from "@/canvasControls";
 
-import { BOOK_ICON_IMAGE_URL } from '@/common/builtInImageUrls';
+import { BOOK_ICON_IMAGE_URL } from './overlayIconUrls';
 
 export function updateOverlayIconsLayout(layout:ControlLayout, imageSet:ImageSet):void {
   const bookImage = imageSet.findImage(BOOK_ICON_IMAGE_URL);

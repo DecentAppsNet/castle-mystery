@@ -7,6 +7,7 @@ import OverlayControlId from "./types/OverlayControlId";
 import GameState from "../../types/GameState";
 import { drawDiscoveryCounters, getPeakDiscoveryIconSize } from "./discoveryCounterDrawUtil";
 export { initializeDiscoveryCounterAnimations } from "./discoveryCounterDrawUtil";
+export { BOOK_ICON_IMAGE_URL, ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "./overlayIconUrls";
 
 // The singleton is fine as long as the game isn't rendered with multiple instances.
 let theLayout:ControlLayout|null = null;

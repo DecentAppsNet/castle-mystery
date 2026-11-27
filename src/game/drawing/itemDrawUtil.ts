@@ -17,7 +17,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import { ImageSet } from "@/imageLoading";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
-import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "./overlay";
 import ImageAsset from "@/imageLoading/types/ImageAsset";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 import Position from "../types/Position";

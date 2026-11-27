@@ -28,7 +28,6 @@ type GameState = {
   lastActiveCharacterChangedValue:string,
   lastMinutesChangedCallMetaTime:number,
   lastMinutesChangedValue:number,
-  lastNotifiedDiscoveriesKey:string
   readonly backgroundImageUrl:string|null,
   readonly baseCharacters:Character[],
   readonly baseItemsById:Map<string, Item>,

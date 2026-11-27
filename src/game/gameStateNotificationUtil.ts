@@ -3,8 +3,6 @@
 
 import { msecsToMinutes } from "@/common/timeUtil";
 
-import { createDiscoveries } from "./discoveriesUtil";
-import Discoveries from "./types/Discoveries";
 import GameState from "./types/GameState";
 
 const UPDATE_MINUTES_META_TIME_INTERVAL = 200;
@@ -24,16 +22,4 @@ export function callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActi
   if (gameState.activeCharacterId === gameState.lastActiveCharacterChangedValue) return;
   gameState.lastActiveCharacterChangedValue = gameState.activeCharacterId;
   onActiveCharacterChanged(gameState.activeCharacterId);
-}
-
-export function callOnDiscoveriesChangedAsNeeded(gameState:GameState, onDiscoveriesChanged:(discoveries:Discoveries) => void) {
-  const discoveries = createDiscoveries(gameState);
-  const discoveriesKey = JSON.stringify(discoveries);
-  if (discoveriesKey === gameState.lastNotifiedDiscoveriesKey) return;
-  gameState.lastNotifiedDiscoveriesKey = discoveriesKey;
-  onDiscoveriesChanged({
-    ...discoveries,
-    discoveredCharacterIconUrls:[...discoveries.discoveredCharacterIconUrls],
-    discoveredItemIconUrls:[...discoveries.discoveredItemIconUrls]
-  });
 }

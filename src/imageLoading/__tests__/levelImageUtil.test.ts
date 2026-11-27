@@ -9,7 +9,7 @@ import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { createGameState } from '@/game/gameUtil';
 import Conclusion from '@/conclusions/types/Conclusion';
 import ClozePartType from '@/conclusions/types/ClozePartType';
-import { ROOM_DISCOVERY_ICON_URL } from '@/game/discoveryIconUrlUtil';
+import { ROOM_DISCOVERY_ICON_URL } from '@/game/drawing/overlay';
 
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {

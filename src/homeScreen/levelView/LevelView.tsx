@@ -8,7 +8,6 @@ import { findOverlayControlAtPoint } from '@/game/drawing/overlay';
 import { pauseGameState, updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
-import Discoveries from '@/game/types/Discoveries';
 import { drawCurtainOverlay, isCurtainVisible } from './curtains';
 import { announceInitialClosedFrame, clearLevelView, prepareLevelViewCache, prepareLevelViewFrame } from './levelViewFrameUtil';
 import type LevelViewFrameState from './types/LevelViewFrameState';
@@ -44,7 +43,6 @@ type Props = {
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
-  onDiscoveriesChanged:(discoveries:Discoveries) => void,
   beforeWorldFrame:(gameState:GameState) => void,
   onStateChanged:(gameState:GameState) => void,
   onInitialClosedFrame:() => void,
@@ -73,7 +71,7 @@ type Props = {
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
 function LevelView({ref, gameState, bookState, onStorageError, onBookImmediateSave, onBookInteractionCommitted, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
-    onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
+    beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
     closeRequest:null, awaitingReplacement:false });
@@ -204,7 +202,7 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookImmediateSa
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
     if (!isGameDisabled()) beforeWorldFrame(currentGameState);
     updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
-        onDiscoveriesChanged, onStateChanged);
+      onStateChanged);
     _updateOverlayCursor(context);
   }
 

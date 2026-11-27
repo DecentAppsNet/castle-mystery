@@ -7,12 +7,9 @@ import LevelView from "@/homeScreen/levelView/LevelView";
 import { updateNextCharacter, updatePlayPause, updateTime } from "./interactions/gameplay";
 import { msecsToMinutes } from '@/common/timeUtil';
 import GameState from "@/game/types/GameState";
-import DiscoveriesView from "./discoveriesView/DiscoveriesView";
 import { changeLevel, resetLevel } from "./interactions/levels";
 import { urlToFilename } from '@/common/urlUtil';
 import { pushLevelChanges } from '@/persistence/levelChangeQueue';
-import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
-import { createDiscoveries } from "@/game/discoveriesUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
 import type LevelViewHandle from './levelView/types/LevelViewHandle';
 import type LevelLoadRequest from './types/LevelLoadRequest';
@@ -52,7 +49,6 @@ function HomeScreen() {
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
-  const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [, setActiveCharacterId] = useState<string>("");
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
@@ -159,7 +155,6 @@ function HomeScreen() {
       await _publishPreparedLevelState(initResults, initResults.bookState, initResults.bookLoadKind === 'fresh');
       if (isCancelled || !loadRequestRef.current.isMounted) return;
       setBookState(initResults.bookState);
-      setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
     }).catch((error:unknown) => {
       if (isCancelled || !loadRequestRef.current.isMounted) return;
@@ -184,7 +179,7 @@ function HomeScreen() {
     void resetLevel({ imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setDiscoveries, setActiveCharacterId });
+      setIsPlaying, setMinutes, setActiveCharacterId });
   }
 
   function _handleLevelSelect(levelUrl:string, hideBookFirst:boolean = false) {
@@ -195,7 +190,7 @@ function HomeScreen() {
     void changeLevel({ imageSet:imageSetRef.current, levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:() => _closeCurtain(hideBookFirst),
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setIsPlaying, setMinutes, setDiscoveries, setActiveCharacterId });
+      setIsPlaying, setMinutes, setActiveCharacterId });
   }
 
   const isSliderAtRightmostPosition = minutes >= toMinutes;
@@ -263,7 +258,6 @@ function HomeScreen() {
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 
-          onDiscoveriesChanged={setDiscoveries} 
           onStateChanged={_handleStateChanged}
           beforeWorldFrame={state => { if (state === saveGameStateRef.current) saveCoordinatorRef.current?.beforeFrame(); }}
           onInitialClosedFrame={() => setIsInitialClosedFramePainted(true)}
@@ -281,11 +275,6 @@ function HomeScreen() {
         />
       </div>
 
-      {gameState && <div className={styles.sidePane}>
-        <div className={styles.discoveriesPane}>
-          <DiscoveriesView discoveries={discoveries} />
-        </div>
-      </div>}
       {storageErrorMessage && <p className={styles.storageError} role="alert">{storageErrorMessage}</p>}
     </div>
   );

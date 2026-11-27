@@ -2,7 +2,7 @@
 
 import { assertNonNullable } from "decent-portal";
 import { createDiscoveries } from "../../discoveriesUtil";
-import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "../../discoveryIconUrlUtil";
+import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "./overlayIconUrls";
 import GameState from "../../types/GameState";
 
 type BookRect = { x:number, y:number, width:number, height:number };

@@ -22,7 +22,7 @@ import { drawCharacterHead } from './characters/characterHeadDrawUtil';
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
-import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "./overlay";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";

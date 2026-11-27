@@ -15,11 +15,9 @@ import { ImageSet } from "@/imageLoading";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import {
   callOnActiveCharacterChangedAsNeeded,
-  callOnDiscoveriesChangedAsNeeded,
   callOnMinutesChangedAsNeeded
 } from "./gameStateNotificationUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
-import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { createInitialTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
@@ -89,8 +87,7 @@ function _findCharacterSkinIdAtTime(timeline:Timeline, time:number, characterId:
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
-    onActiveCharacterChanged?:(characterId:string) => void,
-    onDiscoveriesChanged?:(discoveries:Discoveries) => void, onStateChanged?:(gameState:GameState) => void) {
+    onActiveCharacterChanged?:(characterId:string) => void, onStateChanged?:(gameState:GameState) => void) {
   
   if (!gameState) {
     context.canvas.style.cursor = "default";
@@ -113,7 +110,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
-  if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context, metaTime);
 }
 
@@ -156,7 +152,6 @@ export function createGameState(level:GameStateLevelInputs, imageSet:ImageSet = 
     lastActiveCharacterChangedValue:"",
     lastMinutesChangedCallMetaTime:Number.NEGATIVE_INFINITY,
     lastMinutesChangedValue:NaN,
-    lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
     metaTimeEffects:[],
     metaTimeToGameTimeOffset:0,
     roomShellCacheByRoomId:createEmptyRoomShellCache(),

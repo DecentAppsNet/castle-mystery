@@ -8,7 +8,7 @@ import { isCharacterInteractive } from "@/game/interactivityUtil";
 import Character from "@/game/types/Character";
 import ClozeCategory from "./types/ClozeCategory";
 import { ErrorCollector } from "../errorCollection";
-import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/drawing/overlay";
 import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
 import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";

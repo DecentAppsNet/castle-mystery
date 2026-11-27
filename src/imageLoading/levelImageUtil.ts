@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { getGroundImageAssetUrl, isCandidateUrls } from "@/game/imageUrlUtil";
-import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { BOOK_ICON_IMAGE_URL, ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "@/game/drawing/overlay";
 import { findTextureImageUrls } from "@/game/textureUtil";
 import ClozeImage from "@/conclusions/types/ClozeImage";
 import ClozePartType from "@/conclusions/types/ClozePartType";
@@ -10,7 +10,7 @@ import Level from "@/levelLoading/types/Level";
 import ImageSet from "./ImageSet";
 import { assertNonNullable } from "decent-portal";
 import BodyPart from '@/game/characterBody/types/BodyPart';
-import { BOOK_ICON_IMAGE_URL, BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
+import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
   ILLUMINATIONS_IMAGE_URL, KEY_IMAGE_URL } from '@/common/builtInImageUrls';
 
 function _findItemImageUrls(level:Level):string[] {
