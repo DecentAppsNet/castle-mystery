@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createDefaultBookState } from '../types/BookState';
 import { goNextPage, goPrevPage } from '../navigationUtil';
-import { calcBookOffsetsForAnimationAndUpdate } from '../drawing/bookAnimationUtil';
+import { calcBookOffsetsForAnimationAndUpdate, hideBook } from '../drawing/bookAnimationUtil';
 
 function _createSinglePageBookState(pageNo:number) {
   const bookState = createDefaultBookState();
@@ -30,9 +30,11 @@ describe('navigationUtil', () => {
   describe('goNextPage()', () => {
     it('finishes the next-page flip before shifting to a left page', () => {
       const bookState = _createSinglePageBookState(2);
-      goNextPage(0, bookState);
+      const onCommitted = vi.fn(() => expect(bookState.pageNo).toBe(3));
+      goNextPage(0, bookState, onCommitted);
       expect(bookState.animationKind).toBe('flipNext');
       expect(bookState.pageNo).toBe(2);
+      expect(onCommitted).not.toHaveBeenCalled();
       const flipEnd = bookState.animationDuration;
 
       calcBookOffsetsForAnimationAndUpdate(flipEnd, bookState);
@@ -43,6 +45,16 @@ describe('navigationUtil', () => {
 
       calcBookOffsetsForAnimationAndUpdate(flipEnd + bookState.animationDuration, bookState);
       expect(bookState.animationKind).toBeNull();
+      expect(onCommitted).toHaveBeenCalledOnce();
+    });
+
+    it('does not signal a turn aborted before its page change', () => {
+      const bookState = _createSinglePageBookState(2);
+      const onCommitted = vi.fn();
+      goNextPage(0, bookState, onCommitted);
+      hideBook(bookState.animationDuration / 2, bookState);
+      expect(bookState.pageNo).toBe(2);
+      expect(onCommitted).not.toHaveBeenCalled();
     });
 
     it('still shifts without flipping when moving from a left page to a right page', () => {
@@ -95,11 +107,14 @@ describe('navigationUtil', () => {
     it('still changes double-page spreads immediately with only a flip', () => {
       const bookState = _createSinglePageBookState(3);
       if (bookState.layout) bookState.layout.isSinglePageView = false;
-      goPrevPage(0, bookState);
+      const onCommitted = vi.fn(() => expect(bookState.pageNo).toBe(1));
+      goPrevPage(0, bookState, onCommitted);
       expect(bookState.animationKind).toBe('flipPrev');
       expect(bookState.pageNo).toBe(1);
       calcBookOffsetsForAnimationAndUpdate(bookState.animationDuration, bookState);
       expect(bookState.animationKind).toBeNull();
+      goPrevPage(1000, bookState, onCommitted);
+      expect(onCommitted).toHaveBeenCalledOnce();
     });
   });
 });

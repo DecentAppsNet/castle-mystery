@@ -390,7 +390,8 @@ describe('book claim resolution', () => {
     bookState.animationKind = 'flipNext';
     claimBookConclusion(bookState, 1, 123);
     bookState.animationKind = null;
-    bookState.pieceDragState = { piece:bookState.pieceStack[2], grabOffset:[0, 0], extractedAppearance:null };
+    const piece = bookState.pieceStack[2];
+    bookState.pieceDragState = { piece, initialPiece:{ ...piece }, initialStackI:2, grabOffset:[0, 0], extractedAppearance:null };
     claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
   });

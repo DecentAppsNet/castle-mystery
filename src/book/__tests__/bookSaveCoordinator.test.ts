@@ -77,7 +77,7 @@ describe('BookSaveCoordinator', () => {
     const piece = { kind:'note' as const, pageI:0, styleNo:0, text:'Note', xPercent:0, yPercent:0 };
     book.pieceStack.push(piece);
     writer.requestDebouncedSave();
-    book.pieceDragState = { piece, grabOffset:[0, 0], extractedAppearance:null };
+    book.pieceDragState = { piece, initialPiece:{ ...piece }, initialStackI:0, grabOffset:[0, 0], extractedAppearance:null };
     await vi.advanceTimersByTimeAsync(3100);
     expect(pathStoreMock.setText).not.toHaveBeenCalled();
     piece.xPercent = 20;

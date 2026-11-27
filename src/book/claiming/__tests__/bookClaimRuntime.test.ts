@@ -327,7 +327,7 @@ describe('book claim runtime', () => {
       claimBookConclusion(bookState, 1, STARTED_AT);
       const piece = bookState.pieceStack[2];
       layout.pieceLayouts = [{ piece, rect:{ x:480, y:250, width:40, height:30 }, metrics:first.metrics, isVisible:true }];
-      bookState.pieceDragState = { piece, grabOffset:[0, 0], extractedAppearance:null };
+      bookState.pieceDragState = { piece, initialPiece:{ ...piece }, initialStackI:0, grabOffset:[0, 0], extractedAppearance:null };
       bookState.hungryPieceSlot = first;
       const before = structuredClone(bookState);
       onBookMouseOver(220, 115, STARTED_AT + 1, bookState);

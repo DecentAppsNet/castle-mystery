@@ -251,7 +251,7 @@ describe('bookClaimControlUtil', () => {
   it('keeps an active drag and prepared geometry intact during control refresh', () => {
     const { bookState } = _createFixture();
     const piece = { kind:'answer' as const, pageI:0, styleNo:3, text:'First', xPercent:50, yPercent:50, placement:null };
-    bookState.pieceDragState = { piece, grabOffset:[0, 0], extractedAppearance:null };
+    bookState.pieceDragState = { piece, initialPiece:{ ...piece }, initialStackI:0, grabOffset:[0, 0], extractedAppearance:null };
     const drag = bookState.pieceDragState;
     const slots = bookState.layout?.pieceSlotLayouts;
     updateBookClaimControls(bookState);

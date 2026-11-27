@@ -4,6 +4,8 @@ import PageTextBoxMetrics from '../drawing/types/PageTextBoxMetrics';
 
 type PieceDragState = {
   readonly piece:Piece;
+  readonly initialPiece:Readonly<Piece>;
+  readonly initialStackI:number;
   readonly grabOffset:Point;
   readonly extractedAppearance:{
     readonly height:number;

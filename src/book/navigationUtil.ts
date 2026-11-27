@@ -29,13 +29,15 @@ export function setPageNavigationButtonVisibility(bookState:BookState) {
   _setControlVisibility('nextPage', showNextPage, bookState.layout.controlLayout);
 }
 
-function _setPageNo(pageNo:number, bookState:BookState) {
+function _setPageNo(pageNo:number, bookState:BookState, onCommitted?:() => void) {
+  if (bookState.pageNo === pageNo) return;
   bookState.pageNo = pageNo;
   updateControlLayout(bookState);
   setPageNavigationButtonVisibility(bookState);
+  onCommitted?.();
 }
 
-function _changePageNo(pageNo:number, metaTime:number, bookState:BookState) {
+function _changePageNo(pageNo:number, metaTime:number, bookState:BookState, onCommitted?:() => void) {
   if (bookState.claimState !== null) return;
   if (bookState.pageNo === pageNo) return;
   assertNonNullable(bookState.layout);
@@ -48,7 +50,7 @@ function _changePageNo(pageNo:number, metaTime:number, bookState:BookState) {
     startPageFlip(metaTime, bookState, isGoingLeft ? 'flipPrev' : 'flipNext',
       (metaTime2, isAborted, bookState2) => {
         if (isAborted) return;
-        _setPageNo(pageNo, bookState2);
+        _setPageNo(pageNo, bookState2, onCommitted);
         if (isNextLeftPage) {
           shiftBookLeft(metaTime2, bookState2);
         } else {
@@ -58,7 +60,7 @@ function _changePageNo(pageNo:number, metaTime:number, bookState:BookState) {
     return;
   }
 
-  _setPageNo(pageNo, bookState);
+  _setPageNo(pageNo, bookState, onCommitted);
 
   if (isShiftNeeded) {
     if (isNextLeftPage) {
@@ -75,16 +77,16 @@ function _changePageNo(pageNo:number, metaTime:number, bookState:BookState) {
   }
 }
 
-export function goPrevPage(metaTime:number, bookState:BookState) {
+export function goPrevPage(metaTime:number, bookState:BookState, onCommitted?:() => void) {
   assertNonNullable(bookState.layout);
   let nextPageNo = bookState.pageNo - (bookState.layout.isSinglePageView ? 1 : 2);
   if (nextPageNo < 1) nextPageNo = 1;
-  _changePageNo(nextPageNo, metaTime, bookState); 
+  _changePageNo(nextPageNo, metaTime, bookState, onCommitted);
 }
 
-export function goNextPage(metaTime:number, bookState:BookState) {
+export function goNextPage(metaTime:number, bookState:BookState, onCommitted?:() => void) {
   assertNonNullable(bookState.layout);
   let nextPageNo = bookState.pageNo + (bookState.layout.isSinglePageView ? 1 : 2);
   if (nextPageNo > bookState.pages.length) nextPageNo = bookState.pages.length;
-  _changePageNo(nextPageNo, metaTime, bookState); 
+  _changePageNo(nextPageNo, metaTime, bookState, onCommitted);
 }

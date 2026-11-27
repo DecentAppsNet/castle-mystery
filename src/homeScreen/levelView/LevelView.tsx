@@ -36,6 +36,7 @@ type Props = {
   bookState:BookState|null,
   onStorageError:(error:unknown) => void,
   onBookClaimSettled:() => void,
+  onBookInteractionCommitted:() => void,
   loadedLevelUrl:string|null,
   isGameDisabled:() => boolean,
   onChapterLevelSelected:(levelUrl:string) => void,
@@ -70,7 +71,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettled, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
+function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettled, onBookInteractionCommitted, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
     onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -164,7 +165,7 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettle
       const canvasX = (event.clientX - rect.left) * canvas.width / rect.width;
       const canvasY = (event.clientY - rect.top) * canvas.height / rect.height;
       if (isRelease) {
-        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), draggedBookState);
+        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), draggedBookState, onBookInteractionCommitted);
         _cancel();
       } else {
         onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), draggedBookState);
@@ -274,7 +275,8 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettle
         if (bookState?.isVisible) {
           const hit = e.button === 0 ? findBookNoteClick(bookState, canvasX, canvasY) : null;
           if (hit) notePressRef.current = { ...hit, book:bookState, clientX:e.clientX, clientY:e.clientY };
-          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onChapterLevelSelected, loadedLevelUrl)) {
+          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onChapterLevelSelected,
+            loadedLevelUrl, onBookInteractionCommitted)) {
             e.preventDefault();
             _startBookDragTracking(e.currentTarget, bookState);
           }
@@ -307,7 +309,7 @@ function LevelView({ref, gameState, bookState, onStorageError, onBookClaimSettle
         const rect = e.currentTarget.getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
-        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), bookState);
+        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), bookState, onBookInteractionCommitted);
       }}
       onMouseMove={(e) => {
         pointerClientPositionRef.current = [e.clientX, e.clientY];

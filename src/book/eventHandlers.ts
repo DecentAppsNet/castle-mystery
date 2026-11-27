@@ -52,7 +52,7 @@ function _isPointInsideBook(bookState:BookState, canvasX:number, canvasY:number)
 
 export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number, bookState:BookState,
   canStartPieceDrag:boolean = false, onChapterLevelSelected:((levelUrl:string) => void)|null = null,
-  loadedLevelUrl:string|null = null):boolean {
+  loadedLevelUrl:string|null = null, onCommitted?:() => void):boolean {
   if (bookState.claimState !== null) return false;
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind || bookState.pieceDragState !== null) return false;
@@ -62,7 +62,7 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   const piece = id === null ? findBookPieceAtPoint(bookState, canvasX, canvasY) : null;
   if (piece !== null) {
     if (canStartPieceDrag) return beginBookPieceDrag(bookState, canvasX, canvasY);
-    bringBookPieceToFront(bookState, piece);
+    if (bringBookPieceToFront(bookState, piece)) onCommitted?.();
     return false;
   }
   if (id === null && canStartPieceDrag && beginBookPieceDrag(bookState, canvasX, canvasY)) return true;
@@ -85,8 +85,8 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
     return false;
   }
 
-  if (id === 'prevPage') goPrevPage(metaTime, bookState);
-  if (id === 'nextPage') goNextPage(metaTime, bookState);
+  if (id === 'prevPage') goPrevPage(metaTime, bookState, onCommitted);
+  if (id === 'nextPage') goNextPage(metaTime, bookState, onCommitted);
   if (id === 'claim') {
     const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
     claimBookConclusion(bookState, leftPageNo, metaTime);
@@ -94,10 +94,10 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   return false;
 }
 
-export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState) {
+export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState, onCommitted?:() => void) {
   if (bookState.claimState !== null) return;
   if (bookState.pieceDragState !== null) {
-    releaseBookPieceDrag(bookState, canvasX, canvasY);
+    if (releaseBookPieceDrag(bookState, canvasX, canvasY)) onCommitted?.();
     return;
   }
   assert(bookState.isVisible); // Caller should check.

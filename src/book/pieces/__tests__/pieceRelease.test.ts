@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/conclusions';
 import ClozeBlank from '@/conclusions/types/ClozeBlank';
@@ -229,16 +230,69 @@ describe('loose-piece release placement', () => {
 
   it('never assigns through repeated cancellation followed by a late release', () => {
     const fixture = _createPreparedBook();
+    const onCommitted = vi.fn();
     onBookMouseDown(500, 270, 0, fixture.bookState, true);
     onBookMouseOver(520, 270, 60, fixture.bookState);
     const stack = fixture.bookState.pieceStack;
     endBookPieceDrag(fixture.bookState);
     endBookPieceDrag(fixture.bookState);
-    onBookMouseUp(500, 270, 120, fixture.bookState);
+    onBookMouseUp(500, 270, 120, fixture.bookState, onCommitted);
+    expect(onCommitted).not.toHaveBeenCalled();
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
     expect(fixture.piece.xPercent).toBe(52.5);
     expect(fixture.bookState.pieceStack).toBe(stack);
     expect(fixture.piece.placement).toBeNull();
+  });
+
+  it('signals placement only after the release commits and clears the drag', () => {
+    const { bookState, blank, piece } = _createPreparedBook();
+    const onCommitted = vi.fn(() => {
+      expect(bookState.pieceDragState).toBeNull();
+      expect(blank.playerAnswerIndex).toBe(0);
+      expect(piece.placement).not.toBeNull();
+    });
+    expect(onBookMouseDown(500, 270, 0, bookState, true, null, null, onCommitted)).toBe(true);
+    expect(onCommitted).not.toHaveBeenCalled();
+    onBookMouseUp(500, 270, 120, bookState, onCommitted);
+    expect(onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it('signals a stack-only change, but not another release at the same position', () => {
+    const { bookState, piece, parkedPiece, layout } = _createPreparedBook();
+    layout.pieceSlotLayouts = [];
+    const onCommitted = vi.fn();
+    expect(onBookMouseDown(500, 270, 0, bookState, true, null, null, onCommitted)).toBe(true);
+    expect(onCommitted).not.toHaveBeenCalled();
+    onBookMouseUp(500, 270, 120, bookState, onCommitted);
+    expect(bookState.pieceStack).toEqual([parkedPiece, piece]);
+    expect(onCommitted).toHaveBeenCalledOnce();
+    expect(onBookMouseDown(500, 270, 150, bookState, true)).toBe(true);
+    onBookMouseOver(550, 270, 180, bookState);
+    onBookMouseUp(500, 270, 210, bookState, onCommitted);
+    expect(onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it('signals a non-drag raise only when stack order changes', () => {
+    const { bookState, piece } = _createPreparedBook();
+    const onCommitted = vi.fn();
+    onBookMouseDown(500, 270, 0, bookState, false, null, null, onCommitted);
+    expect(bookState.pieceStack.at(-1)).toBe(piece);
+    onBookMouseDown(500, 270, 10, bookState, false, null, null, onCommitted);
+    expect(onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it('signals a note move after release, not while moving across the spread', () => {
+    const { bookState, layout } = _createPreparedBook();
+    const note = { kind:'note' as const, text:'Note', styleNo:0, pageI:0, xPercent:50, yPercent:50 };
+    bookState.pieceStack = [note];
+    layout.pieceLayouts = [{ ...layout.pieceLayouts[0], piece:note, rect:{ x:280, y:255, width:40, height:30 } }];
+    const onCommitted = vi.fn();
+    expect(onBookMouseDown(300, 270, 0, bookState, true, null, null, onCommitted)).toBe(true);
+    onBookMouseOver(700, 270, 60, bookState);
+    expect(onCommitted).not.toHaveBeenCalled();
+    onBookMouseUp(700, 270, 120, bookState, onCommitted);
+    expect(note.pageI).toBe(1);
+    expect(onCommitted).toHaveBeenCalledOnce();
   });
 
   it('cannot assign after the normal invalidation cancellation funnel', () => {

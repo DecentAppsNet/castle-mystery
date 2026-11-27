@@ -22,16 +22,18 @@ export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   });
 }
 
-export function bringBookPieceToFront(bookState:BookState, piece:Piece):void {
+export function bringBookPieceToFront(bookState:BookState, piece:Piece):boolean {
   const visiblePieces = getVisibleBookPieces(bookState);
   assert(visiblePieces.includes(piece));
-  bookState.pieceStack = [...bookState.pieceStack.filter(candidate => candidate !== piece), piece];
+  const isReordered = bookState.pieceStack.at(-1) !== piece;
+  if (isReordered) bookState.pieceStack = [...bookState.pieceStack.filter(candidate => candidate !== piece), piece];
 
   const { layout } = bookState;
   if (layout) {
     layout.pieceLayouts = layout.pieceLayouts.filter(record => visiblePieces.includes(record.piece))
       .sort((first, second) => bookState.pieceStack.indexOf(first.piece) - bookState.pieceStack.indexOf(second.piece));
   }
+  return isReordered;
 }
 
 export function findBookPieceAtPoint(bookState:Readonly<BookState>, canvasX:number, canvasY:number):Piece|null {
@@ -46,15 +48,23 @@ export function findBookPieceAtPoint(bookState:Readonly<BookState>, canvasX:numb
 }
 
 export function detachBookPiece(bookState:BookState, slot:PieceSlotLayout, offsetX:number = 0, offsetY:number = 0):PieceLayout {
+  return _detachBookPiece(bookState, slot, _findPlacedPiece(bookState, slot), offsetX, offsetY);
+}
+
+function _findPlacedPiece(bookState:BookState, slot:PieceSlotLayout) {
   // Resolve the exact placed piece before clearing either side of the association.
-  const { layout } = bookState;
-  assertNonNullable(layout);
   const piece = bookState.pieceStack.find(candidate => candidate.kind === 'answer'
     && candidate.placement?.page === slot.page && candidate.placement.blank === slot.blank);
   assertNonNullable(piece);
   assert(piece.kind === 'answer');
   assert(findPieceSlotAnswerIndex(slot, piece) === slot.blank.playerAnswerIndex);
+  return piece;
+}
 
+function _detachBookPiece(bookState:BookState, slot:PieceSlotLayout, piece:Extract<Piece, { kind:'answer' }>,
+  offsetX:number = 0, offsetY:number = 0):PieceLayout {
+  const { layout } = bookState;
+  assertNonNullable(layout);
   // Retain full-slot geometry for immediate interaction, optionally displaced for ejection.
   slot.blank.playerAnswerIndex = -1;
   piece.placement = null;
@@ -67,12 +77,11 @@ export function detachBookPiece(bookState:BookState, slot:PieceSlotLayout, offse
   return record;
 }
 
-function _extractBookPieceAtPoint(bookState:BookState, canvasX:number, canvasY:number):PieceLayout|null {
+function _findOccupiedSlotAtPoint(bookState:BookState, canvasX:number, canvasY:number) {
   const { layout } = bookState;
   assertNonNullable(layout);
-  const slot = layout.pieceSlotLayouts.find(candidate => candidate.blank.playerAnswerIndex !== -1
+  return layout.pieceSlotLayouts.find(candidate => candidate.blank.playerAnswerIndex !== -1
     && isCurrentPieceSlot(bookState, candidate, layout.isSinglePageView) && isPositionInRect(canvasX, canvasY, candidate.rect));
-  return slot ? detachBookPiece(bookState, slot) : null;
 }
 
 export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):boolean {
@@ -81,9 +90,13 @@ export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:
   if (bookState.pieceDragState !== null || !bookState.isVisible || bookState.animationKind !== null
     || !layout || layout.pieceLayoutsPageNo !== bookState.pageNo) return false;
   const loosePiece = findBookPieceAtPoint(bookState, canvasX, canvasY);
-  const extractedLayout = loosePiece === null ? _extractBookPieceAtPoint(bookState, canvasX, canvasY) : null;
-  const piece = loosePiece ?? extractedLayout?.piece ?? null;
+  const slot = loosePiece === null ? _findOccupiedSlotAtPoint(bookState, canvasX, canvasY) : undefined;
+  const placedPiece = slot ? _findPlacedPiece(bookState, slot) : null;
+  const piece = loosePiece ?? placedPiece;
   if (piece === null) return false;
+  const initialPiece = { ...piece };
+  const initialStackI = bookState.pieceStack.indexOf(piece);
+  const extractedLayout = slot && placedPiece ? _detachBookPiece(bookState, slot, placedPiece) : null;
   const record = layout.pieceLayouts.find(candidate => candidate.piece === piece);
   assertNonNullable(record);
 
@@ -91,7 +104,8 @@ export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:
   const extractedAppearance = extractedLayout === null ? null : {
     height:extractedLayout.rect.height, metrics:extractedLayout.metrics
   };
-  bookState.pieceDragState = { piece, grabOffset:calcDragGrabOffset(record.rect, canvasX, canvasY), extractedAppearance };
+  bookState.pieceDragState = { piece, initialPiece, initialStackI,
+    grabOffset:calcDragGrabOffset(record.rect, canvasX, canvasY), extractedAppearance };
   bringBookPieceToFront(bookState, piece);
   updateBookPieceSlotTarget(bookState);
   return true;
@@ -127,7 +141,7 @@ export function moveBookPieceDrag(bookState:BookState, canvasX:number, canvasY:n
   updateBookPieceSlotTarget(bookState);
 }
 
-export function releaseBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):void {
+export function releaseBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):boolean {
   // Movement validates the drag and resolves the shared target at the final release position.
   moveBookPieceDrag(bookState, canvasX, canvasY);
   const { pieceDragState, hungryPieceSlot } = bookState;
@@ -142,4 +156,16 @@ export function releaseBookPieceDrag(bookState:BookState, canvasX:number, canvas
 
   // Cancellation stays assignment-free and may safely run again during listener cleanup.
   endBookPieceDrag(bookState);
+  if (pieceDragState === null) return false;
+  const { piece, initialPiece, initialStackI } = pieceDragState;
+  const stackChanged = initialStackI !== bookState.pieceStack.indexOf(piece);
+  const pageChanged = piece.pageI !== initialPiece.pageI;
+  const positionTolerancePercent = 1e-10;
+  const xChanged = Math.abs(piece.xPercent - initialPiece.xPercent) > positionTolerancePercent;
+  const yChanged = Math.abs(piece.yPercent - initialPiece.yPercent) > positionTolerancePercent;
+  if (stackChanged || pageChanged || xChanged || yChanged) return true;
+
+  if (piece.kind !== 'answer' || initialPiece.kind !== 'answer') return false;
+  return piece.placement?.page !== initialPiece.placement?.page
+    || piece.placement?.blank !== initialPiece.placement?.blank;
 }
