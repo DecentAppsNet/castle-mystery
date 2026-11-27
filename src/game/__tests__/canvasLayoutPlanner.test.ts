@@ -86,6 +86,14 @@ describe('canvasLayoutPlanner', () => {
       });
     });
 
+    it('keeps preferred and fallback placements out of the full-width top band', () => {
+      const planner = new CanvasLayoutPlanner(240, 200, 30);
+
+      expect(planner.findBestPopoverRect({ x:10, y:48, width:20, height:10 }, 40, 20).y).toBe(30);
+      expect(planner.findBestPopoverRect({ x:210, y:48, width:20, height:10 }, 40, 20).y).toBe(30);
+      expect(planner.findBestPopoverRect({ x:10, y:65, width:20, height:10 }, 40, 20).y).toBe(40);
+    });
+
     it('avoids top fallback for the logged mousewheel repro and accepts the available above-anchor placement', () => {
       const planner = new CanvasLayoutPlanner(1200, 1200);
 

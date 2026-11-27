@@ -11,7 +11,12 @@ type CounterAnimation = { count:number, startedAt:number };
 const DISCOVERY_GROWTH_DURATION_MS = 100;
 const DISCOVERY_SHRINK_DURATION_MS = 500;
 const DISCOVERY_PEAK_SCALE = 1.5;
+const DISCOVERY_ICON_HEIGHT_RATIO = 0.8;
 const counterAnimationsByGameState = new WeakMap<GameState, CounterAnimation[]>();
+
+export function getPeakDiscoveryIconSize(bookHeight:number):number {
+  return bookHeight * DISCOVERY_ICON_HEIGHT_RATIO * DISCOVERY_PEAK_SCALE;
+}
 
 function _getDiscoveryCounts(gameState:GameState):number[] {
   const { discoveredSkinIds, discoveredRoomIds, discoveredItemIds } = gameState.discoveryState;
@@ -41,7 +46,7 @@ export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, co
   });
 
   const { width:canvasWidth, height:canvasHeight } = context.canvas;
-  const slotWidth = canvasHeight * 0.14;
+  const slotWidth = canvasHeight * 0.18;
   const gap = canvasHeight * 0.02;
   const groupWidth = 3 * slotWidth + 2 * gap;
   const groupX = (canvasWidth - groupWidth) / 2;
@@ -58,13 +63,13 @@ export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, co
       discoveries.discoveredItemIconUrls.length, discoveries.itemCount]
   ] as const;
   const { imageSet } = gameState;
-  const iconSize = height * 0.8;
-  const peakIconSize = iconSize * DISCOVERY_PEAK_SCALE;
+  const iconSize = height * DISCOVERY_ICON_HEIGHT_RATIO;
+  const peakIconSize = getPeakDiscoveryIconSize(height);
   const padding = height * 0.08;
   const centerY = y + height / 2;
+  const fontSize = height * 0.3;
 
   context.save();
-  context.font = `bold ${height * 0.3}px Georgia, serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.lineJoin = 'round';
@@ -86,8 +91,11 @@ export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, co
     const label = `${count} of ${total}`;
     const labelWidth = slotWidth - peakIconSize - 2 * padding;
     const labelX = slotX + peakIconSize + padding + labelWidth / 2;
-    context.strokeText(label, labelX, centerY, labelWidth);
-    context.fillText(label, labelX, centerY, labelWidth);
+    context.font = `bold ${fontSize}px Georgia, serif`;
+    const measuredWidth = context.measureText(label).width;
+    if (measuredWidth > labelWidth) context.font = `bold ${fontSize * labelWidth / measuredWidth}px Georgia, serif`;
+    context.strokeText(label, labelX, centerY);
+    context.fillText(label, labelX, centerY);
   });
   context.restore();
 }

@@ -36,7 +36,7 @@ import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntr
 import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffectDispatchUtil";
 import FramePresentationIndex from "../effects/types/FramePresentationIndex";
 import CanvasBubbleAnchor from "../effects/types/CanvasBubbleAnchor";
-import { drawOverlay } from "./overlay";
+import { drawOverlay, getOverlayBottom } from "./overlay";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -353,7 +353,9 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
 
   // Draw the scene background and prepare per-room content.
   const drawnExitIds = new Set<string>();
-  const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
+  const { width:canvasWidth, height:canvasHeight } = context.canvas;
+  const layoutPlanner = new CanvasLayoutPlanner(canvasWidth, canvasHeight,
+    getOverlayBottom(canvasWidth, canvasHeight, gameState.imageSet));
   _drawGround(gameState, context);
   _drawRoomSilhouettes(gameState, context);
   const roomRenderStates = rooms.map(room => {

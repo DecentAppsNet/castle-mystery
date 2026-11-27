@@ -37,12 +37,12 @@ function _findTopmostOverlappingReservedRectY(popoverRect:Rect, reservedRects:Re
 }
 
 function _findBestAbovePopoverRect(popoverX:number, popoverWidth:number, popoverHeight:number,
-  anchorRect:Rect, reservedRects:ReadonlyArray<Rect>):Rect|null {
+  anchorRect:Rect, reservedRects:ReadonlyArray<Rect>, popoverMinY:number):Rect|null {
   assert(popoverWidth > 0);
   assert(popoverHeight > 0);
 
   let popoverY = _calcInitialPopoverY(anchorRect, popoverHeight);
-  while (popoverY >= 0) {
+  while (popoverY >= popoverMinY) {
     const popoverRect = createRect(popoverX, popoverY, popoverWidth, popoverHeight);
     const topmostReservedRectY = _findTopmostOverlappingReservedRectY(popoverRect, reservedRects);
     if (topmostReservedRectY === null) return popoverRect;
@@ -61,11 +61,14 @@ export default class CanvasLayoutPlanner {
   readonly canvasWidth:number;
   readonly canvasHeight:number;
   readonly reservedRects:Rect[];
+  private readonly popoverMinY:number;
 
-  constructor(canvasWidth:number, canvasHeight:number) {
+  constructor(canvasWidth:number, canvasHeight:number, popoverMinY = 0) {
     this.canvasWidth = canvasWidth;
     this.canvasHeight = canvasHeight;
+    this.popoverMinY = popoverMinY;
     this.reservedRects = [];
+    if (popoverMinY > 0) this.reserveRect(createRect(0, 0, canvasWidth, popoverMinY));
   }
 
   reserveRect(rect:Rect):void {
@@ -74,9 +77,10 @@ export default class CanvasLayoutPlanner {
 
   findBestPopoverRect(anchorRect:Rect, popoverWidth:number, popoverHeight:number):Rect {
     const popoverX = _clampPopoverXIntoCanvas(_calcInitialPopoverX(anchorRect, popoverWidth), popoverWidth, this.canvasWidth);
-    const abovePopoverRect = _findBestAbovePopoverRect(popoverX, popoverWidth, popoverHeight, anchorRect, this.reservedRects);
+    const abovePopoverRect = _findBestAbovePopoverRect(popoverX, popoverWidth, popoverHeight,
+      anchorRect, this.reservedRects, this.popoverMinY);
     if (abovePopoverRect) return abovePopoverRect;
     
-    return createRect(popoverX, 0, popoverWidth, popoverHeight);
+    return createRect(popoverX, this.popoverMinY, popoverWidth, popoverHeight);
   }
 }

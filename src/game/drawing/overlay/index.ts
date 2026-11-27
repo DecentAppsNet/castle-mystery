@@ -5,7 +5,7 @@ import { drawOverlayIcons, updateOverlayIconsLayout } from "./iconUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import OverlayControlId from "./types/OverlayControlId";
 import GameState from "../../types/GameState";
-import { drawDiscoveryCounters } from "./discoveryCounterDrawUtil";
+import { drawDiscoveryCounters, getPeakDiscoveryIconSize } from "./discoveryCounterDrawUtil";
 export { initializeDiscoveryCounterAnimations } from "./discoveryCounterDrawUtil";
 
 // The singleton is fine as long as the game isn't rendered with multiple instances.
@@ -22,6 +22,13 @@ function _updateTheLayoutAsNeeded(canvasWidth:number, canvasHeight:number, image
 
   theLayout = createLayout(canvasWidth, canvasHeight);
   updateOverlayIconsLayout(theLayout, imageSet);
+}
+
+export function getOverlayBottom(canvasWidth:number, canvasHeight:number, imageSet:ImageSet):number {
+  _updateTheLayoutAsNeeded(canvasWidth, canvasHeight, imageSet);
+  assertNonNullable(theLayout);
+  const { y, height } = findControlRect(theLayout, 'book');
+  return Math.ceil(y + (height + Math.max(height, getPeakDiscoveryIconSize(height))) / 2);
 }
 
 export function drawOverlay(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number):void {
