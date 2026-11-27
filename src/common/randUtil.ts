@@ -25,6 +25,10 @@ export function clearSeed(): void {
   theSequenceState = 0;
 }
 
+export function isSeeded():boolean {
+  return theSeed;
+}
+
 /** If no seed has been set, returns Math.random(). Otherwise returns a number between 0 (inclusive) and 1 (exclusive)
   from a repeatable pseudo-random sequence generated from the seed. */
 export function rand(): number {

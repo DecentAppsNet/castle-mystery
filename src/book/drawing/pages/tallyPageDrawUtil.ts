@@ -7,7 +7,7 @@ import PageWriter from "./PageWriter";
 import { toEnglishNumber } from "@/common/numberTextUtil";
 import { countRemainingRequiredConclusions, countShameMarks } from '@/book/claiming';
 
-export function drawTallyPage(page:TallyPage, pw:PageWriter) {
+export function drawTallyPage(page:TallyPage, pw:PageWriter, pageNo:number) {
   pw.setFontSize('l');
   pw.addDivider();
   pw.addTextLine('Conclusions');
@@ -31,12 +31,6 @@ export function drawTallyPage(page:TallyPage, pw:PageWriter) {
   if (shameMarkCount === 0) {
     pw.addTextLine('You bear no marks of shame\nfrom this chapter.');
   } else {
-    const shameMarkCountText = toEnglishNumber(shameMarkCount);
-    pw.addTextLine('Your false claims\nin this chapter have brought');
-    pw.setFontSize('xl');
-    pw.addTextLine(shameMarkCountText, 'center', 'red');
-    pw.setFontSize('m');
-    const marksText = shameMarkCount === 1 ? 'mark' : 'marks';
-    pw.addTextLine(`${marksText} of shame\nfor which you will atone later.`);
+    pw.addTallyMarks(shameMarkCount, 'red', pageNo);
   }
 }

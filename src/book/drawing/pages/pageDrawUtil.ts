@@ -82,7 +82,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
       }
       break;
     case 'tally':
-      drawTallyPage(page, pageWriter);
+      drawTallyPage(page, pageWriter, pageNo);
     break;
     case 'chapterEnd':
       drawChapterEndPage(page, pageWriter, metaTime, innerPageRect, context);

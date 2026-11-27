@@ -14,6 +14,7 @@ import DividerStyle from "../types/DividerStyle";
 import PageTextBoxMetrics from '../types/PageTextBoxMetrics';
 import PieceSlotAnimationState from '../types/PieceSlotAnimationState';
 import FontSize from '../types/FontSize';
+import { drawTallyMarks } from "./tallyMarkDrawUtil";
 
 type ColorName = 'black' | 'red' | 'grey';
 type TextJustification = 'left' | 'right' | 'center';
@@ -218,6 +219,20 @@ class PageWriter {
     }
     this._writeWord(word, isUnderlined);
     this._context.restore();
+  }
+
+  addTallyMarks(count:number, colorName:ColorName = 'red', pageNo:number) {
+    const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
+    let remainingCount = count;
+    const MAX_ITERATION_COUNT = 20;
+    let iterationCount = 0;
+    while(remainingCount && ++iterationCount < MAX_ITERATION_COUNT) {
+      const rect:Rect = { x:this._pageRect.x, y:this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100,
+          width:this._pageRect.width, height:lineHeight };          
+      remainingCount = drawTallyMarks(remainingCount, rect, colorNameToHex[colorName], this._context, pageNo*1000+iterationCount);
+      this.addLineBreak();
+    }
+    assert(iterationCount < MAX_ITERATION_COUNT); // Infinite loop guard failed. Debug error in drawTallyMarks() logic probably.
   }
 
   addPieceSlot(text:string, styleNo:number = -1,
