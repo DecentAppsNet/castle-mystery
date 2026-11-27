@@ -9,6 +9,7 @@ import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { createGameState } from '@/game/gameUtil';
 import Conclusion from '@/conclusions/types/Conclusion';
 import ClozePartType from '@/conclusions/types/ClozePartType';
+import { ROOM_DISCOVERY_ICON_URL } from '@/game/discoveryIconUrlUtil';
 
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {
@@ -50,6 +51,7 @@ describe('levelImageUtil', () => {
       const requestedUrls = vi.mocked(fetch).mock.calls.map(([url]) => String(url));
       const primaryUrls = requestedUrls.filter(url => !url.endsWith('.punch.png'));
 
+      expect(imageSet.findImage(ROOM_DISCOVERY_ICON_URL)).not.toBeNull();
       expect(primaryUrls.length).toBeGreaterThan(0);
       for (const requestedUrl of primaryUrls) {
         expect(requestedUrl).toMatch(/^\/castle-mystery\/assets\//);

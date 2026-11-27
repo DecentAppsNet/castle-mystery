@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { getGroundImageAssetUrl, isCandidateUrls } from "@/game/imageUrlUtil";
-import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findTextureImageUrls } from "@/game/textureUtil";
 import ClozeImage from "@/conclusions/types/ClozeImage";
 import ClozePartType from "@/conclusions/types/ClozePartType";
@@ -45,6 +45,8 @@ function _createPermanentImageUrls():ReadonlySet<string> {
     CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
     KEY_IMAGE_URL,
     getGroundImageAssetUrl(),
+    ROOM_DISCOVERY_ICON_URL,
+    UNKNOWN_CHARACTER_ICON_URL,
     UNKNOWN_ITEM_ICON_URL,
     BOOK_ICON_IMAGE_URL,
     BOOK_IMAGE_URL,

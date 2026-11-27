@@ -451,7 +451,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     }
   }
 
-  drawOverlay(gameState.imageSet, context);
+  drawOverlay(gameState, context);
 
   // Draw optional developer layout diagnostics last.
   _drawReservedRects(layoutPlanner, context);
