@@ -24,7 +24,7 @@ export function drawTallyPage(page:TallyPage, pw:PageWriter, pageNo:number) {
   pw.addLineBreak();
   pw.setFontSize('l');
   pw.addDivider();
-  pw.addTextLine('Marks of Shame');
+  pw.addTextLine(`Marks of Shame`);
   pw.addDivider();
   pw.setFontSize('m');
   const shameMarkCount = countShameMarks(page.conclusions);
@@ -32,5 +32,8 @@ export function drawTallyPage(page:TallyPage, pw:PageWriter, pageNo:number) {
     pw.addTextLine('You bear no marks of shame\nfrom this chapter.');
   } else {
     pw.addTallyMarks(shameMarkCount, 'red', pageNo);
+    pw.addLineBreak();
+    pw.setFontSize('s');
+    pw.addTextLine('These marks may later be expunged\nthrough acts of satisfaction.');
   }
 }
