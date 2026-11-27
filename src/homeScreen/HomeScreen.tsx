@@ -273,9 +273,8 @@ function HomeScreen() {
           onChange={_handleTimeChange}
           onPlayPauseChange={_handlePlayPauseChange}
         />
+        {storageErrorMessage && <p className={styles.storageError} role="alert">{storageErrorMessage}</p>}
       </div>
-
-      {storageErrorMessage && <p className={styles.storageError} role="alert">{storageErrorMessage}</p>}
     </div>
   );
 }

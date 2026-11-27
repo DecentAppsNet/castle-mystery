@@ -16,7 +16,7 @@
   font-family: 'im-fell-english', serif;
 }
 
-html, body { height: 100vh; }
+html, body { height: 100dvh; }
 
 p, a, ul, ol, li {
   padding: .5rem;
