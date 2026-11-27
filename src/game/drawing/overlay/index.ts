@@ -6,6 +6,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import OverlayControlId from "./types/OverlayControlId";
 import GameState from "../../types/GameState";
 import { drawDiscoveryCounters } from "./discoveryCounterDrawUtil";
+export { initializeDiscoveryCounterAnimations } from "./discoveryCounterDrawUtil";
 
 // The singleton is fine as long as the game isn't rendered with multiple instances.
 let theLayout:ControlLayout|null = null;
@@ -23,12 +24,12 @@ function _updateTheLayoutAsNeeded(canvasWidth:number, canvasHeight:number, image
   updateOverlayIconsLayout(theLayout, imageSet);
 }
 
-export function drawOverlay(gameState:GameState, context:CanvasRenderingContext2D):void {
+export function drawOverlay(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number):void {
   const { imageSet } = gameState;
   _updateTheLayoutAsNeeded(context.canvas.width, context.canvas.height, imageSet);
   assertNonNullable(theLayout);
   drawOverlayIcons(theLayout, imageSet, context);
-  drawDiscoveryCounters(gameState, findControlRect(theLayout, 'book'), context);
+  drawDiscoveryCounters(gameState, findControlRect(theLayout, 'book'), context, metaTime);
 }
 
 export function findOverlayControlAtPoint(canvasX:number, canvasY:number):OverlayControlId|null {

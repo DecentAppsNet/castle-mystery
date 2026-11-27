@@ -10,6 +10,7 @@ import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
+import { initializeDiscoveryCounterAnimations } from "./drawing/overlay";
 import { ImageSet } from "@/imageLoading";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import {
@@ -97,6 +98,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   }
 
   const metaTime = findMetaTimeNow();
+  initializeDiscoveryCounterAnimations(gameState);
   _clearCanvas(gameState, context);
 
   const wasPlaying = gameState.isPlaying;

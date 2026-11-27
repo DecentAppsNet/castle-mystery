@@ -6,8 +6,40 @@ import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_
 import GameState from "../../types/GameState";
 
 type BookRect = { x:number, y:number, width:number, height:number };
+type CounterAnimation = { count:number, startedAt:number };
 
-export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, context:CanvasRenderingContext2D):void {
+const DISCOVERY_GROWTH_DURATION_MS = 100;
+const DISCOVERY_SHRINK_DURATION_MS = 500;
+const DISCOVERY_PEAK_SCALE = 1.5;
+const counterAnimationsByGameState = new WeakMap<GameState, CounterAnimation[]>();
+
+function _getDiscoveryCounts(gameState:GameState):number[] {
+  const { discoveredSkinIds, discoveredRoomIds, discoveredItemIds } = gameState.discoveryState;
+  return [discoveredSkinIds.size, discoveredRoomIds.size, discoveredItemIds.size];
+}
+
+export function initializeDiscoveryCounterAnimations(gameState:GameState):void {
+  if (counterAnimationsByGameState.has(gameState)) return;
+  counterAnimationsByGameState.set(gameState, _getDiscoveryCounts(gameState).map(count => ({ count, startedAt:-Infinity })));
+}
+
+function _getIconScale(elapsed:number):number {
+  const progress = elapsed < DISCOVERY_GROWTH_DURATION_MS
+    ? elapsed / DISCOVERY_GROWTH_DURATION_MS
+    : Math.max(0, 1 - (elapsed - DISCOVERY_GROWTH_DURATION_MS) / DISCOVERY_SHRINK_DURATION_MS);
+  return 1 + (DISCOVERY_PEAK_SCALE - 1) * progress;
+}
+
+export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, context:CanvasRenderingContext2D,
+    metaTime:number):void {
+  const animations = counterAnimationsByGameState.get(gameState);
+  assertNonNullable(animations);
+  _getDiscoveryCounts(gameState).forEach((count, counterIndex) => {
+    const animation = animations[counterIndex];
+    if (count > animation.count) animation.startedAt = metaTime;
+    animation.count = count;
+  });
+
   const { width:canvasWidth, height:canvasHeight } = context.canvas;
   const slotWidth = canvasHeight * 0.14;
   const gap = canvasHeight * 0.02;
@@ -27,6 +59,7 @@ export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, co
   ] as const;
   const { imageSet } = gameState;
   const iconSize = height * 0.8;
+  const peakIconSize = iconSize * DISCOVERY_PEAK_SCALE;
   const padding = height * 0.08;
   const centerY = y + height / 2;
 
@@ -44,14 +77,15 @@ export function drawDiscoveryCounters(gameState:GameState, bookRect:BookRect, co
     const icon = (iconUrl && imageSet.findImage(iconUrl)) || imageSet.findImage(fallbackUrl);
     assertNonNullable(icon, `Missing discovery icon asset ${fallbackUrl}`);
     const { width, height:sourceHeight } = icon.visibleSourceRect ?? icon.image;
-    const scale = iconSize / Math.max(width, sourceHeight);
+    const animationScale = _getIconScale(metaTime - animations[counterIndex].startedAt);
+    const scale = iconSize * animationScale / Math.max(width, sourceHeight);
     const iconWidth = width * scale;
     const iconHeight = sourceHeight * scale;
-    imageSet.drawImage(icon, slotX + (iconSize - iconWidth) / 2, centerY - iconHeight / 2,
+    imageSet.drawImage(icon, slotX + (peakIconSize - iconWidth) / 2, centerY - iconHeight / 2,
       iconWidth, iconHeight, context);
     const label = `${count} of ${total}`;
-    const labelWidth = slotWidth - iconSize - 2 * padding;
-    const labelX = slotX + iconSize + padding + labelWidth / 2;
+    const labelWidth = slotWidth - peakIconSize - 2 * padding;
+    const labelX = slotX + peakIconSize + padding + labelWidth / 2;
     context.strokeText(label, labelX, centerY, labelWidth);
     context.fillText(label, labelX, centerY, labelWidth);
   });
