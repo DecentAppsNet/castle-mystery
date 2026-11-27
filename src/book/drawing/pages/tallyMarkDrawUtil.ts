@@ -3,10 +3,10 @@ import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 
-const INK_LINE_POINT_OFFSET_RANGE = 4; // Canvas pixel units.
+const INK_LINE_POINT_OFFSET_RANGE_PERCENT = .10; // % of container height.
 const SPLOTCH_CHANCE = .2; // 1 = 100%
-const SPLOTCH_RADIUS_RANGE = 3; // Canvas pixel units.
-const SPLOTCH_ORTHOGONAL_OFFSET_RANGE = 8; // Canvas pixel units.
+const SPLOTCH_RADIUS_RANGE_PERCENT = .075; // % of container height.
+const SPLOTCH_ORTHOGONAL_OFFSET_RANGE_PERCENT = .20; // % of container height.
 const MAX_SPLOTCHES = 2;
 
 const MAX_TALLY_MARK_COUNT = 25;
@@ -15,14 +15,14 @@ const MAX_GROUP_COUNT = Math.ceil(MAX_TALLY_MARK_COUNT / MARKS_IN_GROUP);
 const GROUP_GAP_PERCENT = .05; // % of container width.
 const GROUP_WIDTH_PERCENT = (1 - GROUP_GAP_PERCENT * (MAX_GROUP_COUNT - 1)) / MAX_GROUP_COUNT; // % of container width.
 
-function _calcInkLinePointOffset(point:Point):Point {
+function _calcInkLinePointOffset(point:Point, offsetRange:number):Point {
   return [
-    point[0] + (INK_LINE_POINT_OFFSET_RANGE * rand()) - (INK_LINE_POINT_OFFSET_RANGE / 2),
-    point[1] + (INK_LINE_POINT_OFFSET_RANGE * rand()) - (INK_LINE_POINT_OFFSET_RANGE / 2)
+    point[0] + offsetRange * (rand() - .5),
+    point[1] + offsetRange * (rand() - .5)
   ];
 }
 
-function _drawInkLine(from:Point, to:Point, colorHex:string, context:CanvasRenderingContext2D):void {
+function _drawInkLine(from:Point, to:Point, rowHeight:number, colorHex:string, context:CanvasRenderingContext2D):void {
   /* To mimic an ink stroke, set up polygonal points in a teardrop swath shape.
 
                2        3
@@ -39,7 +39,8 @@ function _drawInkLine(from:Point, to:Point, colorHex:string, context:CanvasRende
   const length = Math.hypot(deltaX, deltaY);
   assert(length > 0);
   const orthogonal:Point = [-deltaY / length, deltaX / length];
-  const strokeRadius = INK_LINE_POINT_OFFSET_RANGE / 2;
+  const pointOffsetRange = rowHeight * INK_LINE_POINT_OFFSET_RANGE_PERCENT;
+  const strokeRadius = pointOffsetRange / 2;
   const midpoint:Point = [from[0] + deltaX / 2, from[1] + deltaY / 2];
   const nearEnd:Point = [from[0] + deltaX * .9, from[1] + deltaY * .9];
   const points = [
@@ -49,7 +50,7 @@ function _drawInkLine(from:Point, to:Point, colorHex:string, context:CanvasRende
     to,
     [nearEnd[0] - orthogonal[0] * strokeRadius, nearEnd[1] - orthogonal[1] * strokeRadius] as Point,
     [midpoint[0] - orthogonal[0] * strokeRadius, midpoint[1] - orthogonal[1] * strokeRadius] as Point
-  ].map(_calcInkLinePointOffset);
+  ].map(point => _calcInkLinePointOffset(point, pointOffsetRange));
 
   // Fill the ink-stroke polygon without changing the caller's canvas state.
   context.save();
@@ -64,10 +65,10 @@ function _drawInkLine(from:Point, to:Point, colorHex:string, context:CanvasRende
   for (let splotchChanceI = 0; splotchChanceI < MAX_SPLOTCHES; ++splotchChanceI) {
     if (rand() < SPLOTCH_CHANCE) {
       const rayPosition = rand();
-      const orthogonalOffset = rand() * SPLOTCH_ORTHOGONAL_OFFSET_RANGE - SPLOTCH_ORTHOGONAL_OFFSET_RANGE / 2;
+      const orthogonalOffset = (rand() - .5) * rowHeight * SPLOTCH_ORTHOGONAL_OFFSET_RANGE_PERCENT;
       const x = from[0] + deltaX * rayPosition + orthogonal[0] * orthogonalOffset;
       const y = from[1] + deltaY * rayPosition + orthogonal[1] * orthogonalOffset;
-      const radius = rand() * SPLOTCH_RADIUS_RANGE;
+      const radius = rand() * rowHeight * SPLOTCH_RADIUS_RANGE_PERCENT;
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
@@ -84,9 +85,9 @@ function _drawTallyMarkGroup(count:number, rect:Rect, colorHex:string, context:C
   const bottom = rect.y + rect.height;
   for (let verticalMarkI = 0; verticalMarkI < verticalMarkCount; ++verticalMarkI) {
     const x = rect.x + (verticalMarkI + .5) * gapWidth;
-    _drawInkLine([x, rect.y], [x, bottom], colorHex, context);
+    _drawInkLine([x, rect.y], [x, bottom], rect.height, colorHex, context);
   }
-  if (count === MARKS_IN_GROUP) _drawInkLine([rect.x + rect.width, rect.y], [rect.x, bottom], colorHex, context);
+  if (count === MARKS_IN_GROUP) _drawInkLine([rect.x + rect.width, rect.y], [rect.x, bottom], rect.height, colorHex, context);
 }
 
 function _calcGroupRect(groupI:number, containerRect:Rect):Rect {
