@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "levelUrls": ["/levels/first.md"],
+  "pageNo": 5,
+  "pages": [
+    { "kind": "blank", "chapterNo": 0, "headingText": "" },
+    { "kind": "bookStart", "chapterNo": 0, "headingText": "", "title": "Castle Mystery", "subtitle": null, "author": "Author" },
+    { "kind": "blank", "chapterNo": 0, "headingText": "" },
+    { "kind": "chapterStart", "chapterNo": 1, "headingText": "", "levelUrl": "/levels/first.md", "title": "First", "description": "The first chapter" },
+    {
+      "kind": "conclusion", "chapterNo": 1, "headingText": "Identity", "levelUrl": "/levels/first.md",
+      "conclusion": {
+        "id": "identity", "title": "Identity",
+        "parts": [
+          { "type": "text", "text": "The visitor was " },
+          { "type": "blank", "answerSetI": 0, "correctAnswerIndexes": [0], "playerAnswerIndex": 0 },
+          { "type": "separator" },
+          { "type": "image", "imageUrl": "/assets/items/key.png" }
+        ],
+        "answerSets": [{ "sourceCategoryId": "characters", "answers": ["Duchess", "Guard"] }],
+        "isComplete": false, "isLocked": false, "isOptional": true, "incorrectGuessCount": 2,
+        "unlockConclusionIds": [], "revealRoomIds": ["hall"]
+      }
+    },
+    { "kind": "blank", "chapterNo": 1, "headingText": "Identity" },
+    { "kind": "tally", "chapterNo": 1, "headingText": "Tally" },
+    { "kind": "chapterEnd", "chapterNo": 1, "headingText": "End", "levelUrl": "/levels/first.md", "winSynopsis": "The end" }
+  ],
+  "pieceStack": [
+    { "kind": "note", "pageI": 1, "styleNo": 0, "text": "Revisit this", "xPercent": -2.5, "yPercent": 120 },
+    { "kind": "answer", "pageI": 4, "styleNo": 0, "text": "Duchess", "xPercent": 0, "yPercent": 0, "placement": { "pageI": 4, "partI": 1 } },
+    { "kind": "answer", "pageI": 4, "styleNo": 0, "text": "Guard", "xPercent": 22.5, "yPercent": 12, "placement": null }
+  ]
+}
